@@ -136,3 +136,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Настройки для изображений
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
+
+# Кастомная модель пользователя
+AUTH_USER_MODEL = 'users.CustomUser'
+
+# Настройки аутентификации
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+

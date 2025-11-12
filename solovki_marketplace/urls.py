@@ -7,6 +7,7 @@ from routes.views import route_list  # добавляем импорт
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('routes/', include('routes.urls', namespace='routes')),
+    path('users/', include('users.urls', namespace='users')),
     path('', route_list, name='home'),  # главная страница
 ]
 

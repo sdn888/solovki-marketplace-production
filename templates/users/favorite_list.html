@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои избранные точки - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+            --sunset: #E74C3C;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--text-dark);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: var(--stone);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .favorite-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--aurora);
+        }
+
+        .priority-5 { border-left-color: #dc3545; }
+        .priority-4 { border-left-color: #fd7e14; }
+        .priority-3 { border-left-color: #ffc107; }
+        .priority-2 { border-left-color: #20c997; }
+        .priority-1 { border-left-color: #6c757d; }
+
+        .priority-stars {
+            font-size: 18px;
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+
+        .favorite-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .favorite-remove {
+            background: #dc3545;
+            color: white;
+        }
+
+        .favorite-remove:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .section-title {
+            border-bottom: 2px solid var(--aurora);
+            padding-bottom: 8px;
+            margin: 25px 0 15px 0;
+        }
+
+        .waypoint-meta {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'home' %}" class="back-link">
+            ← Назад к маршрутам
+        </a>
+        <h1>⭐ Мои избранные точки</h1>
+        <p>Здесь собраны все точки маршрутов, которые вы добавили в избранное</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if favorites_by_priority %}
+        {% for priority, favorites in favorites_by_priority.items %}
+            <div class="section-title">
+                <h2>{{ favorites.0.get_priority_display }}</h2>
+            </div>
+
+            {% for favorite in favorites %}
+            <div class="favorite-card priority-{{ favorite.priority }}">
+                <div class="priority-stars">
+                    {% with ''|center:favorite.priority as range %}
+                        {% for _ in range %}⭐{% endfor %}
+                    {% endwith %}
+                </div>
+
+                <h3>{{ favorite.waypoint.name }}</h3>
+
+                <div class="waypoint-meta">
+                    <p><strong>Маршрут:</strong> {{ favorite.waypoint.route.title }}</p>
+                    <p><strong>Тип:</strong> {{ favorite.waypoint.get_waypoint_type_display }}</p>
+                    <p><strong>Сложность:</strong> {{ favorite.waypoint.get_difficulty_display }}</p>
+                    {% if favorite.planned_visit_date %}
+                    <p><strong>📅 Планирую посетить:</strong> {{ favorite.planned_visit_date }}</p>
+                    {% endif %}
+                </div>
+
+                {% if favorite.waypoint.short_description %}
+                <p>{{ favorite.waypoint.short_description }}</p>
+                {% endif %}
+
+                {% if favorite.personal_notes %}
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                    <strong>Мои заметки:</strong>
+                    <p>{{ favorite.personal_notes }}</p>
+                </div>
+                {% endif %}
+
+                <div>
+                    <a href="{% url 'routes:route_detail' favorite.waypoint.route.pk %}"
+                       class="favorite-btn"
+                       style="background: var(--aurora); color: white;">
+                        📖 Перейти к маршруту
+                    </a>
+                    <a href="{% url 'users:favorite_remove' favorite.waypoint.id %}"
+                       class="favorite-btn favorite-remove">
+                        🗑️ Удалить
+                    </a>
+
+                    <!-- Форма для изменения приоритета -->
+                    <form method="post"
+                          action="{% url 'users:update_favorite_priority' favorite.id %}"
+                          style="display: inline;">
+                        {% csrf_token %}
+                        <select name="priority"
+                                onchange="this.form.submit()"
+                                style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                            {% for value, label in favorite.PRIORITY_CHOICES %}
+                                <option value="{{ value }}"
+                                        {% if value == favorite.priority %}selected{% endif %}>
+                                    Приоритет: {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h2>😔 У вас пока нет избранных точек</h2>
+            <p>Найдите интересные маршруты и добавляйте точки в избранное!</p>
+            <a href="{% url 'home' %}"
+               class="favorite-btn"
+               style="background: var(--aurora); color: white; padding: 12px 24px;">
+                🗺️ Найти маршруты
+            </a>
+        </div>
+    {% endif %}
+</body>
+</html>

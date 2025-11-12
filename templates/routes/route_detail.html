@@ -309,6 +309,40 @@
             font-size: 0.9rem;
         }
 
+        /* Стили для кнопок избранного */
+        .favorite-buttons {
+            margin: 10px 0;
+        }
+
+        .favorite-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-add {
+            background: #28a745;
+            color: white;
+        }
+
+        .favorite-remove {
+            background: #dc3545;
+            color: white;
+        }
+
+        .favorite-login {
+            background: #6c757d;
+            color: white;
+        }
+
+        .favorite-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         /* Image Gallery */
         .image-gallery {
             display: grid;
@@ -472,6 +506,9 @@
             <button class="control-btn" onclick="changeFontSize('medium')" title="Большой">A+</button>
             <button class="control-btn" onclick="changeFontSize('large')" title="Очень большой">A++</button>
         </div>
+        <a href="{% url 'users:favorite_list' %}" class="control-btn" style="background: var(--aurora); text-decoration: none;" title="Мои избранные точки">
+            ⭐ Избранное
+        </a>
         <button class="control-btn print-btn" onclick="window.print()" title="Печать">🖨️</button>
     </div>
 
@@ -558,6 +595,28 @@
                                 <div class="waypoint-number">{{ waypoint.order }}</div>
                                 <div class="waypoint-title">{{ waypoint.name }}</div>
                                 <div class="waypoint-type">{{ waypoint.get_waypoint_type_display }}</div>
+                            </div>
+
+                            <!-- КНОПКИ ИЗБРАННОГО - ДОБАВЛЕНО ЗДЕСЬ -->
+                            <div class="favorite-buttons no-print">
+                                {% if user.is_authenticated %}
+                                    {% load users_tags %}
+                                    {% is_waypoint_favorite user waypoint as is_favorite %}
+
+                                    {% if is_favorite %}
+                                        <a href="{% url 'users:favorite_remove' waypoint.id %}" class="favorite-btn favorite-remove"  title="Удалить из избранного">
+                                            💔 Удалить
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'users:favorite_add' waypoint.id %}" class="favorite-btn favorite-add" title="Добавить в избранное">
+                                            ❤️ В избранное
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{% url 'admin:login' %}?next={{ request.path }}" class="favorite-btn favorite-login" title="Войдите, чтобы добавить в избранное">
+                                        🔒 В избранное
+                                    </a>
+                                {% endif %}
                             </div>
 
                             <div class="waypoint-meta">
