@@ -24,6 +24,62 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            transition: font-size 0.3s ease;
+        }
+
+        /* Добавляем стили для размеров шрифтов */
+        .font-xxsmall { font-size: 12px; }
+        .font-xsmall { font-size: 14px; }
+        .font-small { font-size: 16px; }
+        .font-medium { font-size: 18px; }
+        .font-large { font-size: 20px; }
+
+        /* Панель управления шрифтами */
+        .controls {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .control-btn {
+            background: var(--sea-deep);
+            color: white;
+            border: none;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            min-width: 32px;
+            font-weight: bold;
+        }
+
+        .control-btn:hover {
+            background: var(--sea-dark);
+            transform: translateY(-1px);
+        }
+
+        .print-btn {
+            background: var(--aurora);
+            font-size: 10px;
+            padding: 6px;
+        }
+
+        .print-btn:hover {
+            background: #16a085;
         }
 
         .header {
@@ -103,9 +159,27 @@
             padding: 60px 20px;
             color: #666;
         }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
-<body>
+<body class="font-medium">
+    <!-- Панель управления шрифтами -->
+    <div class="controls no-print">
+        <div class="control-group">
+            <button class="control-btn" onclick="changeFontSize('xxsmall')" title="Очень маленький">A--</button>
+            <button class="control-btn" onclick="changeFontSize('xsmall')" title="Маленький">A-</button>
+            <button class="control-btn" onclick="changeFontSize('small')" title="Средний">A</button>
+            <button class="control-btn" onclick="changeFontSize('medium')" title="Большой">A+</button>
+            <button class="control-btn" onclick="changeFontSize('large')" title="Очень большой">A++</button>
+        </div>
+        <button class="control-btn print-btn" onclick="window.print()" title="Печать">🖨️</button>
+    </div>
+
     <div class="header">
         <a href="{% url 'home' %}" class="back-link">
             ← Назад к маршрутам
@@ -156,5 +230,24 @@
             <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">🗺️ Создать первый маршрут</a>
         </div>
     {% endif %}
+
+    <script>
+        // Функция изменения размера шрифта
+        function changeFontSize(size) {
+            document.body.className = '';
+            if (size !== 'medium') {
+                document.body.classList.add('font-' + size);
+            }
+            localStorage.setItem('preferredFontSize', size);
+        }
+
+        // Восстанавливаем настройки шрифта при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedSize = localStorage.getItem('preferredFontSize');
+            if (savedSize) {
+                changeFontSize(savedSize);
+            }
+        });
+    </script>
 </body>
 </html>
