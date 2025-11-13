@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои персональные маршруты - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+            --sunset: #E74C3C;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--text-dark);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: var(--stone);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--aurora);
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .route-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--sea-deep);
+        }
+
+        .route-meta {
+            display: flex;
+            gap: 1rem;
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-edit {
+            background: #3498DB;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'home' %}" class="back-link">
+            ← Назад к маршрутам
+        </a>
+        <h1>🗺️ Мои персональные маршруты</h1>
+        <p>Создавайте собственные маршруты из понравившихся точек</p>
+        <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">➕ Создать новый маршрут</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if personal_routes %}
+        {% for route in personal_routes %}
+        <div class="route-card" style="border-left-color: {{ route.color }};">
+            <div class="route-header">
+                <h2 class="route-title">{{ route.title }}</h2>
+                <div>
+                    <a href="{% url 'users:personal_route_edit' route.id %}" class="btn btn-edit">✏️ Редактировать</a>
+                    <a href="{% url 'users:personal_route_delete' route.id %}" class="btn btn-danger">🗑️ Удалить</a>
+                </div>
+            </div>
+
+            <div class="route-meta">
+                <span>📅 Создан: {{ route.created_at|date:"d.m.Y" }}</span>
+                <span>📍 Точек: {{ route.points.count }}</span>
+                <span>{% if route.is_public %}🌐 Публичный{% else %}🔒 Приватный{% endif %}</span>
+            </div>
+
+            {% if route.description %}
+            <p>{{ route.description }}</p>
+            {% endif %}
+
+            <div>
+                <a href="{% url 'users:personal_route_detail' route.id %}" class="btn btn-primary">👁️ Просмотреть маршрут</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h2>😔 У вас пока нет персональных маршрутов</h2>
+            <p>Создайте свой первый маршрут и добавляйте в него интересные точки!</p>
+            <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">🗺️ Создать первый маршрут</a>
+        </div>
+    {% endif %}
+</body>
+</html>

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, FavoriteWaypoint, VisitNote
+from .models import CustomUser, FavoriteWaypoint, VisitNote, PersonalRoute, PersonalRoutePoint
 
 
 @admin.register(CustomUser)
@@ -39,4 +39,18 @@ class VisitNoteAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'waypoint__name', 'notes']
     ordering = ['-visit_date']
 
+# новые модели для персональных маршрутов
+@admin.register(PersonalRoute)
+class PersonalRouteAdmin(admin.ModelAdmin):
+    list_display = ['title', 'user', 'color', 'is_public', 'created_at']
+    list_filter = ['is_public', 'created_at', 'color']
+    search_fields = ['title', 'description', 'user__username']
+    ordering = ['-created_at']
+
+@admin.register(PersonalRoutePoint)
+class PersonalRoutePointAdmin(admin.ModelAdmin):
+    list_display = ['route', 'waypoint', 'order']
+    list_filter = ['route', 'route__user']
+    search_fields = ['route__title', 'waypoint__name']
+    ordering = ['route', 'order']
 

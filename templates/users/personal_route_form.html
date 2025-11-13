@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if personal_route %}Редактировать{% else %}Создать{% endif %} маршрут - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: var(--stone);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .color-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-option.selected {
+            border-color: var(--sea-deep);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% if personal_route %}{% url 'users:personal_route_detail' personal_route.id %}{% else %}{% url 'users:personal_route_list' %}{% endif %}" class="back-link">
+            ← Назад
+        </a>
+        <h1>{% if personal_route %}✏️ Редактировать маршрут{% else %}➕ Создать новый маршрут{% endif %}</h1>
+    </div>
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="title">Название маршрута *</label>
+                <input type="text" id="title" name="title"
+                       value="{{ personal_route.title|default:'' }}"
+                       placeholder="Например: Мой идеальный тур по Соловкам" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Описание маршрута</label>
+                <textarea id="description" name="description"
+                          placeholder="Расскажите о вашем маршруте...">{{ personal_route.description|default:'' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Цвет маршрута</label>
+                <div class="color-options">
+                    {% for color_value, color_name in personal_route.COLOR_CHOICES %}
+                    <div class="color-option {% if personal_route.color == color_value or not personal_route and forloop.first %}selected{% endif %}"
+                         style="background: {{ color_value }}; color: white;"
+                         onclick="selectColor('{{ color_value }}')">
+                        {{ color_name }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="color" name="color" value="{{ personal_route.color|default:'#FF6B6B' }}">
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="is_public" name="is_public"
+                           {% if personal_route.is_public %}checked{% endif %}>
+                    <label for="is_public" style="margin: 0;">Сделать маршрут публичным</label>
+                </div>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Публичные маршруты видны другим пользователям
+                </small>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    {% if personal_route %}💾 Сохранить изменения{% else %}🚀 Создать маршрут{% endif %}
+                </button>
+                <a href="{% if personal_route %}{% url 'users:personal_route_detail' personal_route.id %}{% else %}{% url 'users:personal_route_list' %}{% endif %}"
+                   class="btn btn-secondary">
+                    ❌ Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function selectColor(color) {
+            document.getElementById('color').value = color;
+            // Убираем выделение у всех вариантов
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            // Добавляем выделение выбранному варианту
+            event.target.classList.add('selected');
+        }
+
+        // Автоматический выбор цвета при клике
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                selectColor(this.style.backgroundColor);
+            });
+        });
+    </script>
+</body>
+</html>

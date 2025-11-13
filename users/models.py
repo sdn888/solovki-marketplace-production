@@ -126,3 +126,65 @@ class VisitNote(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.waypoint.name} ({self.visit_date})"
 
+# добавим две новые модели: PersonalRoute (сам маршрут) и PersonalRoutePoint (точки в маршруте)
+
+class PersonalRoute(models.Model):
+    COLOR_CHOICES = [
+        ('#1ABC9C', 'Бирюзовый'),
+        ('#3498DB', 'Синий'),
+        ('#9B59B6', 'Фиолетовый'),
+        ('#E74C3C', 'Красный'),
+        ('#F39C12', 'Оранжевый'),
+        ('#2ECC71', 'Зеленый'),
+        ('#34495E', 'Темно-синий'),
+    ]
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='personal_routes',
+        verbose_name="Пользователь"
+    )
+    title = models.CharField(max_length=200, verbose_name="Название маршрута")
+    description = models.TextField(blank=True, verbose_name="Описание")
+    color = models.CharField(
+        max_length=20,
+        choices=COLOR_CHOICES,
+        default='#1ABC9C',
+        verbose_name="Цвет маршрута"
+    )
+    is_public = models.BooleanField(default=False, verbose_name="Публичный маршрут")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} (by {self.user.username})"
+
+    class Meta:
+        verbose_name = "Персональный маршрут"
+        verbose_name_plural = "Персональные маршруты"
+        ordering = ['-created_at']
+
+class PersonalRoutePoint(models.Model):
+    route = models.ForeignKey(
+        PersonalRoute,
+        on_delete=models.CASCADE,
+        related_name='points'
+    )
+    waypoint = models.ForeignKey(
+        Waypoint,
+        on_delete=models.CASCADE,
+        verbose_name="Точка маршрута"
+    )
+    order = models.IntegerField(default=0, verbose_name="Порядок в маршруте")
+    notes = models.TextField(blank=True, verbose_name="Заметки для точки")
+
+    class Meta:
+        verbose_name = "Точка персонального маршрута"
+        verbose_name_plural = "Точки персональных маршрутов"
+        ordering = ['route', 'order']
+        unique_together = ['route', 'order']
+
+    def __str__(self):
+        return f"{self.order}. {self.waypoint.name} (в {self.route.title})"
+

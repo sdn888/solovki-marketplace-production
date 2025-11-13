@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Удаление маршрута</title>
+</head>
+<body>
+    <h1>Удалить маршрут "{{ object.title }}"?</h1>
+    <p>Это действие нельзя отменить.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Удалить</button>
+        <a href="{% url 'users:personal_route_list' %}">Отмена</a>
+    </form>
+</body>
+</html>
