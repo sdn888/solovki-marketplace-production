@@ -646,12 +646,15 @@
                                         <strong>Добавить в персональный маршрут:</strong>
                                     </div>
                                     {% for personal_route in user.personal_routes.all %}
-                                        <a href="{% url 'users:add_point_to_personal_route' personal_route.id waypoint.id %}"
-                                           class="favorite-btn"
-                                           style="background: {{ personal_route.color }}; color: white; margin: 2px;"
-                                           title="Добавить в '{{ personal_route.title }}'">
-                                            ➕ {{ personal_route.title }}
-                                        </a>
+                                        <form method="post" action="{% url 'users:add_point_to_personal_route' personal_route.id waypoint.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="favorite-btn"
+                                                    style="background: {{ personal_route.color }}; color: white; margin: 2px; border: none; cursor: pointer;"
+                                                    title="Добавить в '{{ personal_route.title }}'">
+                                                ➕ {{ personal_route.title }}
+                                            </button>
+                                        </form>
                                     {% empty %}
                                         <p>У вас нет персональных маршрутов. <a href="{% url 'users:personal_route_create' %}">Создайте первый!</a></p>
                                     {% endfor %}

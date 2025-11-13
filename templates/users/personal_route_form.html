@@ -129,31 +129,47 @@
         <form method="post">
             {% csrf_token %}
 
+            <!-- Отображение ошибок формы -->
+            {% if form.errors %}
+            <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 1rem;">
+                <strong>Исправьте ошибки:</strong>
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
             <div class="form-group">
-                <label for="title">Название маршрута *</label>
-                <input type="text" id="title" name="title"
-                       value="{{ personal_route.title|default:'' }}"
-                       placeholder="Например: Мой идеальный тур по Соловкам" required>
+                <label for="id_title">Название маршрута *</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.title.errors }}
+                </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="description">Описание маршрута</label>
-                <textarea id="description" name="description"
-                          placeholder="Расскажите о вашем маршруте...">{{ personal_route.description|default:'' }}</textarea>
+                <label for="id_description">Описание маршрута</label>
+                {{ form.description }}
             </div>
 
             <div class="form-group">
                 <label>Цвет маршрута</label>
                 <div class="color-options">
-                    {% for color_value, color_name in personal_route.COLOR_CHOICES %}
-                    <div class="color-option {% if personal_route.color == color_value or not personal_route and forloop.first %}selected{% endif %}"
+                    {% for color_value, color_name in form.fields.color.choices %}
+                    <div class="color-option {% if form.color.value == color_value or not form.color.value and forloop.first %}selected{% endif %}"
                          style="background: {{ color_value }}; color: white;"
-                         onclick="selectColor('{{ color_value }}')">
+                         data-color="{{ color_value }}"
+                         onclick="selectColor('{{ color_value }}', this)">
                         {{ color_name }}
                     </div>
                     {% endfor %}
                 </div>
-                <input type="hidden" id="color" name="color" value="{{ personal_route.color|default:'#FF6B6B' }}">
+                {{ form.color }}
+                {% if form.color.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.color.errors }}
+                </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -180,20 +196,24 @@
     </div>
 
     <script>
-        function selectColor(color) {
-            document.getElementById('color').value = color;
+        function selectColor(colorValue, element) {
+            document.getElementById('id_color').value = colorValue;
             // Убираем выделение у всех вариантов
             document.querySelectorAll('.color-option').forEach(option => {
                 option.classList.remove('selected');
             });
             // Добавляем выделение выбранному варианту
-            event.target.classList.add('selected');
+            element.classList.add('selected');
         }
 
-        // Автоматический выбор цвета при клике
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.addEventListener('click', function() {
-                selectColor(this.style.backgroundColor);
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Устанавливаем начальный выбранный цвет
+            const initialColor = document.getElementById('id_color').value || '{{ form.fields.color.choices.0.0 }}';
+            document.querySelectorAll('.color-option').forEach(option => {
+                if (option.getAttribute('data-color') === initialColor) {
+                    option.classList.add('selected');
+                }
             });
         });
     </script>

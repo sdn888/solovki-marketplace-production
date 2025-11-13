@@ -129,7 +129,7 @@
             <div class="route-header">
                 <h2 class="route-title">{{ route.title }}</h2>
                 <div>
-                    <a href="{% url 'users:personal_route_edit' route.id %}" class="btn btn-edit">✏️ Редактировать</a>
+                    <a href="{% url 'users:personal_route_update' route.id %}" class="btn btn-edit">✏️ Редактировать</a>
                     <a href="{% url 'users:personal_route_delete' route.id %}" class="btn btn-danger">🗑️ Удалить</a>
                 </div>
             </div>
