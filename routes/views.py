@@ -96,7 +96,7 @@ def route_visit_notes(request, pk):
 def route_export_pdf(request, pk):
     """Экспорт маршрута в PDF"""
     route = get_object_or_404(Route, pk=pk, is_active=True)
-    waypoints = route.waypoints.all().order_by('order')
+    waypoints = route.waypoints.all().order_by('order').prefetch_related('images')
 
     # Генерируем PDF
     pdf_buffer = generate_route_pdf(route, waypoints)

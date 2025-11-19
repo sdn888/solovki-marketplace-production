@@ -90,6 +90,16 @@ def generate_route_pdf(route, waypoints):
         leftIndent=0
     )
 
+    info_style = ParagraphStyle(
+        name='InfoStyle',
+        parent=styles['Normal'],
+        fontName=font_name,
+        fontSize=9,
+        textColor=colors.HexColor('#666666'),
+        spaceAfter=3,
+        leftIndent=10
+    )
+
     # Собираем элементы документа
     story = []
 
@@ -164,11 +174,59 @@ def generate_route_pdf(route, waypoints):
         if info_text:
             story.append(Paragraph(" • ".join(info_text), normal_style))
 
+        # КАК ДОБРАТЬСЯ - добавляем если есть информация
+        if waypoint.path_description:
+            story.append(Spacer(1, 5))
+            story.append(Paragraph("<b>Как добраться:</b>", normal_style))
+            story.append(Paragraph(waypoint.path_description, info_style))
+
+        # ФОТОГРАФИИ - добавляем первое изображение если есть
+        if waypoint.images.exists():
+            story.append(Spacer(1, 5))
+            story.append(Paragraph("<b>Фото:</b>", normal_style))
+
+            try:
+                first_image = waypoint.images.first()
+                img_path = first_image.image.path
+
+                # Создаем изображение с ограничением по размеру
+                img = Image(img_path, width=8 * cm, height=6 * cm)
+                img.hAlign = 'LEFT'
+                story.append(img)
+                story.append(Spacer(1, 5))
+
+                # Подпись к фото если есть
+                if first_image.caption:
+                    story.append(Paragraph(f"<i>{first_image.caption}</i>", info_style))
+
+            except Exception as e:
+                # Если не удалось загрузить изображение, просто пропускаем
+                print(f"Не удалось загрузить изображение для точки {waypoint.name}: {e}")
+                story.append(Paragraph("<i>[Изображение недоступно]</i>", info_style))
+
         # Подробное описание (если есть)
         if waypoint.detailed_description:
+            story.append(Paragraph("<b>Подробнее:</b>", normal_style))
             story.append(Paragraph(waypoint.detailed_description, normal_style))
 
+        # Историческая справка (если есть)
+        if waypoint.history_info:
+            story.append(Paragraph("<b>Историческая справка:</b>", normal_style))
+            story.append(Paragraph(waypoint.history_info, normal_style))
+
         story.append(Spacer(1, 15))
+
+    # Статическая карта маршрута (если есть)
+    if route.static_map_image:
+        story.append(Paragraph("КАРТА МАРШРУТА", heading_style))
+        try:
+            map_img = Image(route.static_map_image.path, width=15 * cm, height=10 * cm)
+            map_img.hAlign = 'CENTER'
+            story.append(map_img)
+            story.append(Spacer(1, 10))
+        except Exception as e:
+            print(f"Не удалось загрузить карту маршрута: {e}")
+            story.append(Paragraph("<i>[Карта недоступна]</i>", info_style))
 
     # Советы (если есть)
     if hasattr(route, 'tips') and route.tips.exists():
@@ -188,7 +246,6 @@ def generate_route_pdf(route, waypoints):
     doc.build(story)
     buffer.seek(0)
     return buffer
-
 
 def generate_route_gpx(route, waypoints):
     """Генерация GPX-файла для маршрута"""
