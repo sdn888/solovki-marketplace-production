@@ -10,6 +10,8 @@ from django.urls import reverse_lazy
 from .forms import PersonalRouteForm
 from django.db import transaction
 from .forms import VisitNoteForm
+from django.utils import timezone
+from django.db.models import Q
 
 
 @login_required
@@ -238,45 +240,94 @@ def update_points_order(request, route_id):
 
 class VisitNoteListView(ListView):
     model = VisitNote
-    template_name = 'users/visitnote_list.html'
+    template_name = 'users/visit_notes/visitnote_list.html'
     context_object_name = 'visit_notes'
 
     def get_queryset(self):
         return VisitNote.objects.filter(user=self.request.user).select_related('waypoint', 'waypoint__route')
 
+
 class VisitNoteCreateView(CreateView):
     model = VisitNote
     form_class = VisitNoteForm
-    template_name = 'users/visitnote_form.html'
+    template_name = 'users/visit_notes/visitnote_form.html'
     success_url = reverse_lazy('users:visitnote_list')
 
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        # Если waypoint передан в GET параметрах
-        waypoint_id = self.request.GET.get('waypoint_id')
-        if waypoint_id:
-            form.instance.waypoint = get_object_or_404(Waypoint, id=waypoint_id)
-        return super().form_valid(form)
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_initial(self):
         initial = super().get_initial()
         waypoint_id = self.request.GET.get('waypoint_id')
         if waypoint_id:
-            initial['waypoint'] = waypoint_id
+            try:
+                waypoint = Waypoint.objects.get(id=waypoint_id)
+                initial['waypoint'] = waypoint
+            except Waypoint.DoesNotExist:
+                pass
+        initial['visit_date'] = timezone.now().date()
         return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        waypoint_id = self.request.GET.get('waypoint_id')
+        if waypoint_id:
+            try:
+                context['preselected_waypoint'] = Waypoint.objects.get(id=waypoint_id)
+            except Waypoint.DoesNotExist:
+                pass
+        return context
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+
+        # Проверяем, нет ли уже заметки для этой точки в эту дату
+        existing_note = VisitNote.objects.filter(
+            user=self.request.user,
+            waypoint=form.instance.waypoint,
+            visit_date=form.instance.visit_date
+        ).first()
+
+        if existing_note and not self.request.POST.get('force_save'):
+            # Если заметка уже существует, показываем предупреждение
+            context = self.get_context_data(form=form)
+            context['existing_note'] = existing_note
+            return self.render_to_response(context)
+
+        response = super().form_valid(form)
+        messages.success(self.request, f'Заметка о посещении "{form.instance.waypoint.name}" успешно сохранена!')
+        return response
+
+    def post(self, request, *args, **kwargs):
+        # Если пользователь подтвердил создание дубликата
+        if request.POST.get('force_save'):
+            return super().post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
 
 class VisitNoteUpdateView(UpdateView):
     model = VisitNote
     form_class = VisitNoteForm
-    template_name = 'users/visitnote_form.html'
+    template_name = 'users/visit_notes/visitnote_form.html'
     success_url = reverse_lazy('users:visitnote_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_queryset(self):
         return VisitNote.objects.filter(user=self.request.user)
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Заметка о посещении "{form.instance.waypoint.name}" успешно обновлена!')
+        return response
+
 class VisitNoteDeleteView(DeleteView):
     model = VisitNote
-    template_name = 'users/visitnote_confirm_delete.html'
+    template_name = 'users/visit_notes/visitnote_confirm_delete.html'
     success_url = reverse_lazy('users:visitnote_list')
 
     def get_queryset(self):

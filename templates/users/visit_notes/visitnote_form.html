@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if form.instance.pk %}Редактировать{% else %}Добавить{% endif %} заметку - Solovki Marketplace</title>
     <style>
-        /* Используем существующие стили */
         :root {
             --sea-deep: #2C3E50;
             --sea-dark: #34495E;
@@ -49,12 +48,38 @@
             font-weight: 600;
         }
 
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+
         input, textarea, select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--aurora);
+            box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 0.25rem;
+        }
+
+        .preselected-waypoint {
+            background: #e7f3ff;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--aurora);
         }
 
         .btn {
@@ -77,6 +102,12 @@
             background: var(--stone);
             color: white;
         }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -88,6 +119,13 @@
     </div>
 
     <div class="form-card">
+        {% if preselected_waypoint %}
+        <div class="preselected-waypoint">
+            <strong>📍 Выбранная точка:</strong> {{ preselected_waypoint.name }}
+            <br><small>Маршрут: {{ preselected_waypoint.route.title }}</small>
+        </div>
+        {% endif %}
+
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
@@ -98,51 +136,62 @@
             {% endif %}
 
             <div class="form-group">
-                <label for="id_waypoint">Точка маршрута</label>
+                <label for="id_waypoint" class="required">Точка маршрута</label>
                 {{ form.waypoint }}
+                <div class="help-text">Выберите точку маршрута, которую вы посетили</div>
                 {% if form.waypoint.errors %}
-                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                <div class="error-message">
                     {{ form.waypoint.errors }}
                 </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="id_visit_date">Дата посещения</label>
+                <label for="id_visit_date" class="required">Дата посещения</label>
                 {{ form.visit_date }}
+                <div class="help-text">Выберите дату, когда вы посетили эту точку</div>
                 {% if form.visit_date.errors %}
-                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                <div class="error-message">
                     {{ form.visit_date.errors }}
                 </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="id_rating">Оценка</label>
+                <label for="id_rating" class="required">Ваша оценка</label>
                 {{ form.rating }}
+                <div class="help-text">Оцените ваше впечатление от посещения</div>
                 {% if form.rating.errors %}
-                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                <div class="error-message">
                     {{ form.rating.errors }}
                 </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="id_notes">Заметки</label>
+                <label for="id_notes">Заметки и впечатления</label>
                 {{ form.notes }}
+                <div class="help-text">Поделитесь вашими впечатлениями, советами для других посетителей</div>
                 {% if form.notes.errors %}
-                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                <div class="error-message">
                     {{ form.notes.errors }}
                 </div>
                 {% endif %}
             </div>
 
             <div class="form-group">
-                <label for="id_photos">Фотографии</label>
+                <label for="id_photos">Фотографии с посещения</label>
                 {{ form.photos }}
+                <div class="help-text">Загрузите фотографии, сделанные во время посещения (максимум 5MB)</div>
                 {% if form.photos.errors %}
-                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                <div class="error-message">
                     {{ form.photos.errors }}
+                </div>
+                {% endif %}
+                {% if form.instance.photos %}
+                <div style="margin-top: 0.5rem;">
+                    <strong>Текущее фото:</strong>
+                    <img src="{{ form.instance.photos.url }}" alt="Текущее фото" style="max-width: 200px; border-radius: 4px; margin-top: 0.5rem;">
                 </div>
                 {% endif %}
             </div>
