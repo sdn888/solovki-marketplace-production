@@ -3,7 +3,9 @@ from . import views
 from .views import (PersonalRouteListView, PersonalRouteCreateView,
                    PersonalRouteUpdateView, PersonalRouteDeleteView,
                    PersonalRouteDetailView, add_point_to_personal_route,
-                   remove_point_from_personal_route, update_points_order)
+                   remove_point_from_personal_route, update_points_order,
+                    VisitNoteListView, VisitNoteCreateView,
+                    VisitNoteUpdateView, VisitNoteDeleteView,)
 
 app_name = 'users'
 
@@ -22,4 +24,8 @@ urlpatterns = [
     path('personal-routes/<int:route_id>/remove-point/<int:point_id>/', remove_point_from_personal_route,
          name='remove_point_from_personal_route'),
     path('personal-routes/<int:route_id>/update-order/', update_points_order, name='update_points_order'),
+    path('visit-notes/', VisitNoteListView.as_view(), name='visitnote_list'),
+    path('visit-notes/create/', VisitNoteCreateView.as_view(), name='visitnote_create'),
+    path('visit-notes/<int:pk>/edit/', VisitNoteUpdateView.as_view(), name='visitnote_update'),
+    path('visit-notes/<int:pk>/delete/', VisitNoteDeleteView.as_view(), name='visitnote_delete'),
 ]

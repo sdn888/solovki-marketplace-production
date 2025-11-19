@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if form.instance.pk %}Редактировать{% else %}Добавить{% endif %} заметку - Solovki Marketplace</title>
+    <style>
+        /* Используем существующие стили */
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'users:visitnote_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к заметкам
+        </a>
+        <h1>{% if form.instance.pk %}✏️ Редактировать заметку{% else %}📝 Добавить заметку о посещении{% endif %}</h1>
+    </div>
+
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 1rem;">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_waypoint">Точка маршрута</label>
+                {{ form.waypoint }}
+                {% if form.waypoint.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.waypoint.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_visit_date">Дата посещения</label>
+                {{ form.visit_date }}
+                {% if form.visit_date.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.visit_date.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_rating">Оценка</label>
+                {{ form.rating }}
+                {% if form.rating.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.rating.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_notes">Заметки</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.notes.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_photos">Фотографии</label>
+                {{ form.photos }}
+                {% if form.photos.errors %}
+                <div style="color: red; font-size: 0.9rem; margin-top: 5px;">
+                    {{ form.photos.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    {% if form.instance.pk %}💾 Сохранить изменения{% else %}📝 Добавить заметку{% endif %}
+                </button>
+                <a href="{% url 'users:visitnote_list' %}" class="btn btn-secondary">
+                    ❌ Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

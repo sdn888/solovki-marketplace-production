@@ -8,6 +8,8 @@ from .models import FavoriteWaypoint, VisitNote, PersonalRoute, PersonalRoutePoi
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from .forms import PersonalRouteForm
+from django.db import transaction
+from .forms import VisitNoteForm
 
 
 @login_required
@@ -200,6 +202,7 @@ def remove_point_from_personal_route(request, route_id, point_id):
         'personal_route': personal_route
     })
 
+
 @login_required
 def update_points_order(request, route_id):
     """Обновление порядка точек в персональном маршруте"""
@@ -209,14 +212,22 @@ def update_points_order(request, route_id):
             data = json.loads(request.body)
             order_data = data.get('order', [])
 
-            # Обновляем порядок для каждой точки
-            for item in order_data:
-                point_id = item.get('point_id')
-                new_order = item.get('order')
+            # Используем транзакцию для атомарности
+            with transaction.atomic():
+                # Сначала сбрасываем порядок всех точек на временные значения
+                points = PersonalRoutePoint.objects.filter(route=personal_route)
+                for point in points:
+                    point.order = point.order + 10000  # Временное смещение
+                    point.save()
 
-                point = get_object_or_404(PersonalRoutePoint, id=point_id, route=personal_route)
-                point.order = new_order
-                point.save()
+                # Теперь устанавливаем новый порядок
+                for item in order_data:
+                    point_id = item.get('point_id')
+                    new_order = item.get('order')
+
+                    point = get_object_or_404(PersonalRoutePoint, id=point_id, route=personal_route)
+                    point.order = new_order
+                    point.save()
 
             return JsonResponse({'status': 'success', 'message': 'Порядок точек обновлен'})
 
@@ -224,3 +235,49 @@ def update_points_order(request, route_id):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
     return JsonResponse({'status': 'error', 'message': 'Метод не разрешен'}, status=405)
+
+class VisitNoteListView(ListView):
+    model = VisitNote
+    template_name = 'users/visitnote_list.html'
+    context_object_name = 'visit_notes'
+
+    def get_queryset(self):
+        return VisitNote.objects.filter(user=self.request.user).select_related('waypoint', 'waypoint__route')
+
+class VisitNoteCreateView(CreateView):
+    model = VisitNote
+    form_class = VisitNoteForm
+    template_name = 'users/visitnote_form.html'
+    success_url = reverse_lazy('users:visitnote_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        # Если waypoint передан в GET параметрах
+        waypoint_id = self.request.GET.get('waypoint_id')
+        if waypoint_id:
+            form.instance.waypoint = get_object_or_404(Waypoint, id=waypoint_id)
+        return super().form_valid(form)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        waypoint_id = self.request.GET.get('waypoint_id')
+        if waypoint_id:
+            initial['waypoint'] = waypoint_id
+        return initial
+
+class VisitNoteUpdateView(UpdateView):
+    model = VisitNote
+    form_class = VisitNoteForm
+    template_name = 'users/visitnote_form.html'
+    success_url = reverse_lazy('users:visitnote_list')
+
+    def get_queryset(self):
+        return VisitNote.objects.filter(user=self.request.user)
+
+class VisitNoteDeleteView(DeleteView):
+    model = VisitNote
+    template_name = 'users/visitnote_confirm_delete.html'
+    success_url = reverse_lazy('users:visitnote_list')
+
+    def get_queryset(self):
+        return VisitNote.objects.filter(user=self.request.user)

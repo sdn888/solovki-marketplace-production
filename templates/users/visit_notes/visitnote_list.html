@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои заметки о посещениях - Solovki Marketplace</title>
+    <style>
+        /* Используем существующие стили из проекта */
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .note-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--aurora);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-edit {
+            background: #3498DB;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'users:personal_route_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к моим маршрутам
+        </a>
+        <h1>📝 Мои заметки о посещениях</h1>
+        <p>Здесь собраны все ваши заметки о посещенных точках маршрутов</p>
+        <a href="{% url 'users:visitnote_create' %}" class="btn btn-primary">➕ Добавить заметку</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if visit_notes %}
+        {% for note in visit_notes %}
+        <div class="note-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h3>{{ note.waypoint.name }}</h3>
+                    <p><strong>Маршрут:</strong> {{ note.waypoint.route.title }}</p>
+                    <p><strong>Дата посещения:</strong> {{ note.visit_date }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'users:visitnote_update' note.id %}" class="btn btn-edit">✏️ Редактировать</a>
+                    <a href="{% url 'users:visitnote_delete' note.id %}" class="btn btn-danger">🗑️ Удалить</a>
+                </div>
+            </div>
+
+            <div class="rating-stars">
+                {% with ''|center:note.rating as range %}
+                    {% for _ in range %}⭐{% endfor %}
+                {% endwith %}
+                ({{ note.get_rating_display }})
+            </div>
+
+            {% if note.notes %}
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                <strong>Заметки:</strong>
+                <p>{{ note.notes }}</p>
+            </div>
+            {% endif %}
+
+            {% if note.photos %}
+            <div>
+                <strong>Фотографии:</strong>
+                <div style="margin-top: 0.5rem;">
+                    <img src="{{ note.photos.url }}" alt="Фото посещения" style="max-width: 200px; border-radius: 4px;">
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'routes:route_detail' note.waypoint.route.pk %}" class="btn btn-primary">
+                    📖 Перейти к маршруту
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h2>😔 У вас пока нет заметок о посещениях</h2>
+            <p>Добавьте первую заметку о посещенной точке маршрута!</p>
+            <a href="{% url 'users:visitnote_create' %}" class="btn btn-primary">📝 Добавить первую заметку</a>
+        </div>
+    {% endif %}
+</body>
+</html>
