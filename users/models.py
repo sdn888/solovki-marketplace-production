@@ -111,12 +111,12 @@ class VisitNote(models.Model):
         verbose_name="Оценка"
     )
     notes = models.TextField(verbose_name="Заметки о посещении")
-    #photos = models.ImageField(
-    #    upload_to='user_photos/%Y/%m/%d/',
-    #    blank=True,
-    #    null=True,
-    #    verbose_name="Фотографии с посещения"
-    #)
+    photos = models.ImageField(
+        upload_to='user_photos/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        verbose_name="Фотографии с посещения"
+    )
     @property
     def main_photo(self):
         """Возвращает первое фото для обратной совместимости"""

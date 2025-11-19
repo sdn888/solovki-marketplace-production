@@ -142,7 +142,9 @@
                 {% with ''|center:note.rating as range %}
                     {% for _ in range %}⭐{% endfor %}
                 {% endwith %}
-                ({{ note.get_rating_display }})
+                <span style="margin-left: 8px; color: #666; font-size: 0.9em;">
+                    ({{ note.rating }}/5)
+                </span>
             </div>
 
             {% if note.notes %}
@@ -152,29 +154,25 @@
             </div>
             {% endif %}
 
-            {% if note.photos or note.note_images.all %}
+            {% if note.photos %}
             <div>
                 <strong>Фотографии:</strong>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0.5rem;">
-                    {% if note.photos %}
-                    <img src="{{ note.photos.url }}" alt="Основное фото" style="max-width: 200px; border-radius: 4px;">
-                    {% endif %}
 
-                    {% for image in note.note_images.all %}
-                    <img src="{{ image.image.url }}" alt="Дополнительное фото {{ forloop.counter }}" style="max-width: 200px; border-radius: 4px;">
-                    {% endfor %}
+                <!-- Отладочная информация -->
+                <div style="background: #f0f0f0; padding: 5px; margin-bottom: 5px; font-size: 0.8em;">
+                    URL: {{ note.photos.url }}<br>
+                    Название файла: {{ note.photos.name }}<br>
+                    Размер: {{ note.photos.size }} байт
                 </div>
 
-                <!-- Кнопка для добавления дополнительных фото -->
-                <div style="margin-top: 10px;">
-                    <form method="post" action="{% url 'users:visitnote_add_photos' note.id %}" enctype="multipart/form-data" style="display: inline;">
-                        {% csrf_token %}
-                        <input type="file" name="additional_photos" multiple accept="image/*" style="display: inline-block;">
-                        <button type="submit" class="btn" style="background: #3498DB; color: white; padding: 5px 10px;">
-                            📷 Добавить фото
-                        </button>
-                    </form>
+                <div style="margin-top: 0.5rem;">
+                    <img src="{{ note.photos.url }}" alt="Фото посещения" class="note-photo"
+                         onerror="console.log('Ошибка загрузки изображения')">
                 </div>
+            </div>
+            {% else %}
+            <div style="color: #999; font-size: 0.9em;">
+                Фото не загружено
             </div>
             {% endif %}
 

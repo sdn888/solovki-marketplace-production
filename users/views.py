@@ -281,6 +281,11 @@ class VisitNoteCreateView(CreateView):
         return context
 
     def form_valid(self, form):
+        # Отладочная информация
+        print("=== ДЕБАГ ИНФОРМАЦИЯ ===")
+        print(f"Файлы в запросе: {self.request.FILES}")
+        print(f"Данные формы: {form.cleaned_data}")
+
         # Проверяем, нет ли уже заметки для этой точки в эту дату
         existing_note = VisitNote.objects.filter(
             user=self.request.user,
@@ -295,6 +300,12 @@ class VisitNoteCreateView(CreateView):
             return self.render_to_response(context)
 
         response = super().form_valid(form)
+
+        if self.object.photos:
+            print(f"Фото сохранено: {self.object.photos.name}")
+        else:
+            print("Фото НЕ сохранено!")
+
         messages.success(self.request, f'Заметка о посещении "{form.instance.waypoint.name}" успешно сохранена!')
         return response
 

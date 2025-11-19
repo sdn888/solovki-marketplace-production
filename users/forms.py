@@ -26,17 +26,9 @@ class PersonalRouteForm(forms.ModelForm):
 
 
 class VisitNoteForm(forms.ModelForm):
-    photos = forms.ImageField(
-        required=False,
-        widget=forms.ClearableFileInput(attrs={
-            'class': 'form-control'
-        }),
-        label="Фотографии с посещения"
-    )
-
     class Meta:
         model = VisitNote
-        fields = ['waypoint', 'visit_date', 'rating', 'notes', 'photos']  # Вернули photos
+        fields = ['waypoint', 'visit_date', 'rating', 'notes', 'photos']
         widgets = {
             'visit_date': forms.DateInput(attrs={
                 'type': 'date',
@@ -54,11 +46,15 @@ class VisitNoteForm(forms.ModelForm):
             'waypoint': forms.Select(attrs={
                 'class': 'form-control'
             }),
+            'photos': forms.ClearableFileInput(attrs={
+                'class': 'form-control'
+            })
         }
         labels = {
             'visit_date': 'Дата посещения *',
             'rating': 'Ваша оценка *',
             'notes': 'Заметки и впечатления',
+            'photos': 'Фотографии с посещения'
         }
 
     def __init__(self, *args, **kwargs):
@@ -84,28 +80,5 @@ class VisitNoteForm(forms.ModelForm):
             raise forms.ValidationError("Дата посещения не может быть в будущем")
         return visit_date
 
-    def save(self, commit=True):
-        # Сохраняем основную заметку
-        instance = super().save(commit=False)
-        if self.user:
-            instance.user = self.user
 
-        if commit:
-            instance.save()
 
-            # ВРЕМЕННО: сохраняем только первое фото для обратной совместимости
-            photos = self.files.getlist('photos')
-            if photos:
-                # Сохраняем первое фото в основное поле photos
-                instance.photos = photos[0]
-                instance.save()
-
-                # Дополнительные фото пока не сохраняем
-                # for i, photo in enumerate(photos[1:], start=1):
-                #     VisitNoteImage.objects.create(
-                #         visit_note=instance,
-                #         image=photo,
-                #         order=i
-                #     )
-
-        return instance
