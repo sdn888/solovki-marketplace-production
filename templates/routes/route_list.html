@@ -418,6 +418,13 @@
                        style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
                         🗺️ Мои маршруты
                     </a>
+
+                    <!-- ДОБАВЛЯЕМ ССЫЛКУ НА ЗАМЕТКИ -->
+                    <a href="{% url 'users:visitnote_list' %}"
+                       style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
+                        📝 Мои заметки
+                    </a>
+
                 {% else %}
                     <a href="{% url 'admin:login' %}?next={{ request.path }}"
                        style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">

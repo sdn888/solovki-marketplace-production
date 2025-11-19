@@ -534,6 +534,13 @@
                                style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
                                 🗺️ Мои маршруты
                             </a>
+
+                            <!-- ДОБАВЛЯЕМ ССЫЛКУ НА ЗАМЕТКИ -->
+                            <a href="{% url 'users:visitnote_list' %}"
+                               style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
+                                📝 Мои заметки
+                            </a>
+
                         {% else %}
                             <a href="{% url 'admin:login' %}?next={{ request.path }}"
                                style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
@@ -632,6 +639,15 @@
                                             ❤️ В избранное
                                         </a>
                                     {% endif %}
+
+                                    <!-- КНОПКА ДОБАВЛЕНИЯ ЗАМЕТКИ -->
+                                    <a href="{% url 'users:visitnote_create' %}?waypoint_id={{ waypoint.id }}"
+                                       class="favorite-btn"
+                                       style="background: #9B59B6; color: white;"
+                                       title="Добавить заметку о посещении">
+                                        📝 Добавить заметку
+                                    </a>
+
                                 {% else %}
                                     <a href="{% url 'admin:login' %}?next={{ request.path }}" class="favorite-btn favorite-login" title="Войдите, чтобы добавить в избранное">
                                         🔒 В избранное

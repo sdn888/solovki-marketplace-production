@@ -164,6 +164,15 @@
                        style="background: var(--aurora); color: white;">
                         📖 Перейти к маршруту
                     </a>
+
+                    <!-- КНОПКА ДОБАВЛЕНИЯ ЗАМЕТКИ -->
+                    <a href="{% url 'users:visitnote_create' %}?waypoint_id={{ favorite.waypoint.id }}"
+                       class="favorite-btn"
+                       style="background: #9B59B6; color: white;"
+                       title="Добавить заметку о посещении">
+                        📝 Добавить заметку
+                    </a>
+
                     <a href="{% url 'users:favorite_remove' favorite.waypoint.id %}"
                        class="favorite-btn favorite-remove">
                         🗑️ Удалить

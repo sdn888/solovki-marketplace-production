@@ -199,6 +199,17 @@
         </a>
         <h1>{{ personal_route.title }}</h1>
         <p>{{ personal_route.description }}</p>
+
+
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'users:visitnote_list' %}" class="btn" style="background: #9B59B6; color: white; margin-right: 10px;">
+                📝 Мои заметки
+            </a>
+            <a href="{% url 'users:visitnote_create' %}" class="btn" style="background: #3498DB; color: white;">
+                ✨ Добавить заметку
+            </a>
+        </div>
+
         <div class="route-meta">
             <span>📅 Создан: {{ personal_route.created_at|date:"d.m.Y" }}</span>
             <span>📍 Точек: {{ points.count }}</span>
@@ -276,6 +287,14 @@
                 <a href="{% url 'routes:route_detail' point.waypoint.route.pk %}" class="btn btn-primary">
                     📖 Перейти к маршруту
                 </a>
+
+                <a href="{% url 'users:visitnote_create' %}?waypoint_id={{ point.waypoint.id }}"
+                   class="btn"
+                   style="background: #9B59B6; color: white;"
+                   title="Добавить заметку о посещении этой точки">
+                    📝 Добавить заметку
+                </a>
+
                 <form method="post" action="{% url 'users:remove_point_from_personal_route' personal_route.id point.id %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить точку из маршрута?')">

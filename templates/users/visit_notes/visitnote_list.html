@@ -12,6 +12,7 @@
             --cloud: #ECF0F1;
             --stone: #BDC3C7;
             --aurora: #1ABC9C;
+            --purple: #9B59B6;
         }
 
         body {
@@ -32,13 +33,22 @@
             margin-bottom: 2rem;
         }
 
+        .back-link {
+            color: var(--stone);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
         .note-card {
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             margin: 1rem 0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid var(--aurora);
+            border-left: 4px solid var(--purple);
         }
 
         .btn {
@@ -66,6 +76,11 @@
             color: white;
         }
 
+        .btn-purple {
+            background: var(--purple);
+            color: white;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -77,16 +92,27 @@
             font-size: 1.2rem;
             margin: 0.5rem 0;
         }
+
+        .note-photo {
+            max-width: 200px;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <a href="{% url 'users:personal_route_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+        <a href="{% url 'users:personal_route_list' %}" class="back-link">
             ← Назад к моим маршрутам
         </a>
         <h1>📝 Мои заметки о посещениях</h1>
         <p>Здесь собраны все ваши заметки о посещенных точках маршрутов</p>
-        <a href="{% url 'users:visitnote_create' %}" class="btn btn-primary">➕ Добавить заметку</a>
+
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'users:visitnote_create' %}" class="btn btn-purple">➕ Добавить заметку</a>
+            <a href="{% url 'users:favorite_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">⭐ Избранное</a>
+            <a href="{% url 'users:personal_route_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">🗺️ Мои маршруты</a>
+        </div>
     </div>
 
     {% if messages %}
@@ -100,7 +126,7 @@
     {% if visit_notes %}
         {% for note in visit_notes %}
         <div class="note-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                 <div>
                     <h3>{{ note.waypoint.name }}</h3>
                     <p><strong>Маршрут:</strong> {{ note.waypoint.route.title }}</p>
@@ -122,7 +148,7 @@
             {% if note.notes %}
             <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
                 <strong>Заметки:</strong>
-                <p>{{ note.notes }}</p>
+                <p>{{ note.notes|linebreaks }}</p>
             </div>
             {% endif %}
 
@@ -130,7 +156,7 @@
             <div>
                 <strong>Фотографии:</strong>
                 <div style="margin-top: 0.5rem;">
-                    <img src="{{ note.photos.url }}" alt="Фото посещения" style="max-width: 200px; border-radius: 4px;">
+                    <img src="{{ note.photos.url }}" alt="Фото посещения" class="note-photo">
                 </div>
             </div>
             {% endif %}
@@ -139,6 +165,9 @@
                 <a href="{% url 'routes:route_detail' note.waypoint.route.pk %}" class="btn btn-primary">
                     📖 Перейти к маршруту
                 </a>
+                <a href="{% url 'users:visitnote_create' %}?waypoint_id={{ note.waypoint.id }}" class="btn btn-purple">
+                    📝 Добавить еще заметку
+                </a>
             </div>
         </div>
         {% endfor %}
@@ -146,7 +175,8 @@
         <div class="empty-state">
             <h2>😔 У вас пока нет заметок о посещениях</h2>
             <p>Добавьте первую заметку о посещенной точке маршрута!</p>
-            <a href="{% url 'users:visitnote_create' %}" class="btn btn-primary">📝 Добавить первую заметку</a>
+            <a href="{% url 'users:visitnote_create' %}" class="btn btn-purple">📝 Добавить первую заметку</a>
+            <a href="{% url 'home' %}" class="btn btn-primary" style="margin-left: 10px;">🗺️ Найти маршруты</a>
         </div>
     {% endif %}
 </body>

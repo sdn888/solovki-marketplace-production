@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение создания заметки - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+            --warning: #FFA726;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .warning-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 6px solid var(--warning);
+        }
+
+        .existing-note {
+            background: #FFF3CD;
+            border: 1px solid #FFEAA7;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-card">
+        <h2 style="color: var(--warning); margin-bottom: 1rem;">⚠️ Внимание: найденa существующая заметка</h2>
+
+        <p>У вас уже есть заметка о посещении точки <strong>"{{ form.waypoint.value.name }}"</strong> на дату <strong>{{ form.visit_date.value }}</strong>.</p>
+
+        <div class="existing-note">
+            <h4>Существующая заметка:</h4>
+            <p><strong>Оценка:</strong>
+                {% with ''|center:existing_note.rating as range %}
+                    {% for _ in range %}⭐{% endfor %}
+                {% endwith %}
+            </p>
+            {% if existing_note.notes %}
+            <p><strong>Заметки:</strong> {{ existing_note.notes|truncatewords:20 }}</p>
+            {% endif %}
+            {% if existing_note.photos %}
+            <p><strong>Есть фотографии</strong></p>
+            {% endif %}
+        </div>
+
+        <p>Вы хотите:</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <div style="margin-top: 2rem;">
+                <button type="submit" name="force_save" value="1" class="btn btn-warning">
+                    💾 Создать новую заметку (дубликат)
+                </button>
+                <a href="{% url 'users:visitnote_update' existing_note.id %}" class="btn btn-primary">
+                    ✏️ Редактировать существующую заметку
+                </a>
+                <a href="{% url 'users:visitnote_list' %}" class="btn btn-secondary">
+                    ❌ Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

@@ -186,6 +186,12 @@
         </a>
         <h1>🗺️ Мои персональные маршруты</h1>
         <p>Создавайте собственные маршруты из понравившихся точек</p>
+
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'users:visitnote_list' %}" class="btn" style="background: #9B59B6; color: white; margin-right: 10px;">
+                📝 Мои заметки
+            </a>
+
         <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">➕ Создать новый маршрут</a>
     </div>
 
