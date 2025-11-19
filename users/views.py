@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+import json
 from routes.models import Waypoint
 from .models import FavoriteWaypoint, VisitNote, PersonalRoute, PersonalRoutePoint
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
@@ -198,3 +199,28 @@ def remove_point_from_personal_route(request, route_id, point_id):
         'point': point,
         'personal_route': personal_route
     })
+
+@login_required
+def update_points_order(request, route_id):
+    """Обновление порядка точек в персональном маршруте"""
+    if request.method == 'POST':
+        try:
+            personal_route = get_object_or_404(PersonalRoute, id=route_id, user=request.user)
+            data = json.loads(request.body)
+            order_data = data.get('order', [])
+
+            # Обновляем порядок для каждой точки
+            for item in order_data:
+                point_id = item.get('point_id')
+                new_order = item.get('order')
+
+                point = get_object_or_404(PersonalRoutePoint, id=point_id, route=personal_route)
+                point.order = new_order
+                point.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Порядок точек обновлен'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Метод не разрешен'}, status=405)

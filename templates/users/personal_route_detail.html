@@ -157,7 +157,30 @@
                 display: none !important;
             }
         }
+
+        .points-list {
+            position: relative;
+        }
+
+        .point-card {
+            transition: all 0.3s ease;
+            margin: 1rem 0;
+        }
+
+        .point-card.sortable-ghost {
+            opacity: 0.4;
+        }
+
+        .point-card.sortable-chosen {
+            transform: rotate(2deg);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .point-handle:hover {
+            background: #e9ecef !important;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body class="font-medium">
     <!-- Панель управления -->
@@ -210,8 +233,14 @@
     {% endif %}
 
     {% if points %}
+    <div id="points-list" class="points-list">
         {% for point in points %}
-        <div class="point-card">
+        <div class="point-card" data-point-id="{{ point.id }}">
+            <div class="point-handle" style="cursor: grab; padding: 5px; background: #f8f9fa; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <span>☰</span>
+                <span style="font-weight: bold;">Порядок: {{ point.order }}</span>
+            </div>
+
             <h3>{{ point.order }}. {{ point.waypoint.name }}</h3>
             <p><strong>Маршрут:</strong> {{ point.waypoint.route.title }}</p>
             <p><strong>Тип:</strong> {{ point.waypoint.get_waypoint_type_display }}</p>
@@ -240,6 +269,12 @@
             </div>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- Сообщение о сохранении порядка -->
+    <div id="save-message" style="display: none; background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+        Порядок точек сохранен!
+    </div>
     {% else %}
         <div class="empty-state">
             <h2>😔 В этом маршруте пока нет точек</h2>
@@ -404,6 +439,89 @@
                     </div>
                 `;
             }
+        }
+
+        // Drag&Drop функционал
+        document.addEventListener('DOMContentLoaded', function() {
+            const pointsList = document.getElementById('points-list');
+
+            if (pointsList) {
+                const sortable = Sortable.create(pointsList, {
+                    handle: '.point-handle',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    animation: 150,
+
+                    onEnd: function(evt) {
+                        updatePointsOrder();
+                    }
+                });
+            }
+        });
+
+        // Функция обновления порядка точек
+        function updatePointsOrder() {
+            const points = document.querySelectorAll('.point-card');
+            const orderData = [];
+
+            points.forEach((point, index) => {
+                const pointId = point.getAttribute('data-point-id');
+                orderData.push({
+                    point_id: parseInt(pointId),
+                    order: index + 1
+                });
+
+                // Обновляем отображаемый порядок
+                const orderElement = point.querySelector('.point-handle span:last-child');
+                if (orderElement) {
+                    orderElement.textContent = `Порядок: ${index + 1}`;
+                }
+
+                // Обновляем заголовок
+                const titleElement = point.querySelector('h3');
+                if (titleElement) {
+                    const currentText = titleElement.textContent;
+                    const newText = currentText.replace(/^\d+\./, `${index + 1}.`);
+                    titleElement.textContent = newText;
+                }
+            });
+
+            // Отправляем данные на сервер
+            fetch(`/users/personal-routes/{{ personal_route.id }}/update-order/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ order: orderData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showSaveMessage();
+                } else {
+                    alert('Ошибка при сохранении порядка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при сохранении порядка');
+            });
+        }
+
+        // Функция для получения CSRF токена
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfToken ? csrfToken.value : '';
+        }
+
+        // Функция показа сообщения о сохранении
+        function showSaveMessage() {
+            const message = document.getElementById('save-message');
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
         }
     </script>
 </body>

@@ -3,7 +3,7 @@ from . import views
 from .views import (PersonalRouteListView, PersonalRouteCreateView,
                    PersonalRouteUpdateView, PersonalRouteDeleteView,
                    PersonalRouteDetailView, add_point_to_personal_route,
-                   remove_point_from_personal_route)
+                   remove_point_from_personal_route, update_points_order)
 
 app_name = 'users'
 
@@ -21,4 +21,5 @@ urlpatterns = [
          name='add_point_to_personal_route'),
     path('personal-routes/<int:route_id>/remove-point/<int:point_id>/', remove_point_from_personal_route,
          name='remove_point_from_personal_route'),
+    path('personal-routes/<int:route_id>/update-order/', update_points_order, name='update_points_order'),
 ]
