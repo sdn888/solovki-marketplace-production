@@ -227,6 +227,13 @@
         <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">
             Маршрут включает {{ points.count }} точек. Точки отмечены в порядке следования.
         </p>
+
+        <!-- Добавляем информационное сообщение -->
+        <div id="map-update-info" style="display: none; background: #e7f3ff; padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 4px solid #3498db;">
+            <strong>💡 Информация:</strong>
+            Для обновления отображения точек на карте после изменения порядка
+            <a href="javascript:location.reload()" style="color: #2980b9; text-decoration: underline;">обновите страницу</a>.
+        </div>
     </div>
     {% endif %}
 
@@ -519,6 +526,7 @@
             .then(data => {
                 if (data.status === 'success') {
                     showSaveMessage();
+                    showMapUpdateInfo();
                     // Перерисовываем карту после сохранения порядка
                     setTimeout(() => {
                         if (typeof initializePersonalRouteMap === 'function') {
@@ -548,6 +556,14 @@
             setTimeout(() => {
                 message.style.display = 'none';
             }, 3000);
+        }
+
+        // Функция показа информации об обновлении карты
+        function showMapUpdateInfo() {
+            const message = document.getElementById('map-update-info');
+            if (message) {
+                message.style.display = 'block';
+            }
         }
     </script>
 </body>
