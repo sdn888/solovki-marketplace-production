@@ -79,7 +79,9 @@
                 {% with ''|center:note.rating as range %}
                     {% for _ in range %}⭐{% endfor %}
                 {% endwith %}
-                ({{ note.get_rating_display }})
+                <span style="margin-left: 8px; color: #666; font-size: 0.9em;">
+                    ({{ note.rating }}/5)
+                </span>
             </div>
 
             {% if note.notes %}
