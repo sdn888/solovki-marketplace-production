@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ personal_route.title }} - Solovki Marketplace</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- Подключаем SortableJS в head -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --sea-deep: #2C3E50;
@@ -124,6 +126,7 @@
             margin: 1rem 0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             border-left: 4px solid {{ personal_route.color }};
+            transition: all 0.3s ease;
         }
 
         .btn {
@@ -152,19 +155,9 @@
             color: #666;
         }
 
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-        }
-
+        /* Drag&Drop стили */
         .points-list {
             position: relative;
-        }
-
-        .point-card {
-            transition: all 0.3s ease;
-            margin: 1rem 0;
         }
 
         .point-card.sortable-ghost {
@@ -179,8 +172,13 @@
         .point-handle:hover {
             background: #e9ecef !important;
         }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body class="font-medium">
     <!-- Панель управления -->
@@ -236,6 +234,17 @@
     <div id="points-list" class="points-list">
         {% for point in points %}
         <div class="point-card" data-point-id="{{ point.id }}">
+            <!-- Скрытые данные для карты -->
+            <div class="waypoint-data"
+                 data-lat="{{ point.waypoint.latitude }}"
+                 data-lon="{{ point.waypoint.longitude }}"
+                 data-type="{{ point.waypoint.waypoint_type }}"
+                 data-description="{{ point.waypoint.short_description|default:'' }}"
+                 data-route-name="{{ point.waypoint.route.title }}"
+                 style="display: none;">
+            </div>
+
+            <!-- Handle для Drag&Drop -->
             <div class="point-handle" style="cursor: grab; padding: 5px; background: #f8f9fa; border-radius: 4px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
                 <span>☰</span>
                 <span style="font-weight: bold;">Порядок: {{ point.order }}</span>
@@ -296,8 +305,9 @@
             localStorage.setItem('preferredFontSize', size);
         }
 
-        // Восстанавливаем настройки шрифта при загрузке
+        // Основная инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+            // Восстанавливаем настройки шрифта
             const savedSize = localStorage.getItem('preferredFontSize');
             if (savedSize) {
                 changeFontSize(savedSize);
@@ -306,6 +316,7 @@
             // Инициализируем карту, если есть точки
             {% if points %}
             initializePersonalRouteMap();
+            initializeDragAndDrop();
             {% endif %}
         });
 
@@ -313,7 +324,14 @@
         function initializePersonalRouteMap() {
             console.log('Инициализация карты персонального маршрута...');
 
-            // Данные точек маршрута
+            // Уничтожаем предыдущую карту, если она существует
+            const mapElement = document.getElementById('personal-route-map');
+            if (window.personalRouteMap) {
+                window.personalRouteMap.remove();
+                window.personalRouteMap = null;
+            }
+
+            // Данные точек маршрута из шаблона
             const routePoints = [
                 {% for point in points %}
                 {
@@ -352,13 +370,13 @@
 
             try {
                 // Создаем карту
-                const map = L.map('personal-route-map').setView([64.0345, 35.7105], 10);
+                window.personalRouteMap = L.map('personal-route-map').setView([64.0345, 35.7105], 10);
 
                 // Добавляем слой OpenStreetMap
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
-                }).addTo(map);
+                }).addTo(window.personalRouteMap);
 
                 // Цвета для разных типов точек
                 function getMarkerColor(type) {
@@ -393,7 +411,7 @@
                     const color = getMarkerColor(point.type);
                     const icon = createNumberedMarker(point.order, color);
 
-                    const marker = L.marker([point.lat, point.lon], { icon: icon }).addTo(map);
+                    const marker = L.marker([point.lat, point.lon], { icon: icon }).addTo(window.personalRouteMap);
 
                     // Создаем содержимое popup
                     const popupContent = `
@@ -416,7 +434,7 @@
                         weight: 4,
                         opacity: 0.7,
                         lineJoin: 'round'
-                    }).addTo(map);
+                    }).addTo(window.personalRouteMap);
 
                     // Добавляем линию в группу для автозума
                     markers.push(routeLine);
@@ -425,7 +443,7 @@
                 // Настраиваем видимость всех маркеров
                 if (markers.length > 0) {
                     const group = L.featureGroup(markers);
-                    map.fitBounds(group.getBounds().pad(0.1));
+                    window.personalRouteMap.fitBounds(group.getBounds().pad(0.1));
                 }
 
                 console.log('Карта персонального маршрута успешно загружена с', validPoints.length, 'точками');
@@ -440,12 +458,11 @@
                 `;
             }
         }
-
-        // Drag&Drop функционал
-        document.addEventListener('DOMContentLoaded', function() {
+        // Функция инициализации Drag&Drop
+        function initializeDragAndDrop() {
             const pointsList = document.getElementById('points-list');
 
-            if (pointsList) {
+            if (pointsList && typeof Sortable !== 'undefined') {
                 const sortable = Sortable.create(pointsList, {
                     handle: '.point-handle',
                     ghostClass: 'sortable-ghost',
@@ -456,8 +473,11 @@
                         updatePointsOrder();
                     }
                 });
+                console.log('Drag&Drop инициализирован');
+            } else {
+                console.error('SortableJS не загружен или points-list не найден');
             }
-        });
+        }
 
         // Функция обновления порядка точек
         function updatePointsOrder() {
@@ -499,6 +519,12 @@
             .then(data => {
                 if (data.status === 'success') {
                     showSaveMessage();
+                    // Перерисовываем карту после сохранения порядка
+                    setTimeout(() => {
+                        if (typeof initializePersonalRouteMap === 'function') {
+                            initializePersonalRouteMap();
+                        }
+                    }, 500);
                 } else {
                     alert('Ошибка при сохранении порядка: ' + data.message);
                 }
