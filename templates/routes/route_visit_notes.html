@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отзывы о маршруте {{ route.title }} - Соловки</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .note-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'routes:route_detail' route.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к маршруту
+        </a>
+        <h1>📝 Отзывы о маршруте "{{ route.title }}"</h1>
+        <p>Всего {{ visit_notes.count }} отзыв{{ visit_notes.count|pluralize:"ов" }}</p>
+    </div>
+
+    {% if visit_notes %}
+        {% for note in visit_notes %}
+        <div class="note-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                    <h3>{{ note.waypoint.name }}</h3>
+                    <p><strong>Автор:</strong> {{ note.user.username }}</p>
+                    <p><strong>Дата посещения:</strong> {{ note.visit_date }}</p>
+                    <p><strong>Опубликовано:</strong> {{ note.created_at|date:"d.m.Y H:i" }}</p>
+                </div>
+            </div>
+
+            <div class="rating-stars" style="color: #ffc107; font-size: 1.2rem; margin: 0.5rem 0;">
+                {% with ''|center:note.rating as range %}
+                    {% for _ in range %}⭐{% endfor %}
+                {% endwith %}
+                ({{ note.get_rating_display }})
+            </div>
+
+            {% if note.notes %}
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                <strong>Заметки:</strong>
+                <p>{{ note.notes|linebreaks }}</p>
+            </div>
+            {% endif %}
+
+            {% if note.photos or note.note_images.all %}
+            <div>
+                <strong>Фотографии:</strong>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0.5rem;">
+                    {% if note.photos %}
+                    <img src="{{ note.photos.url }}" alt="Основное фото" style="max-width: 200px; border-radius: 4px;">
+                    {% endif %}
+
+                    {% for image in note.note_images.all %}
+                    <img src="{{ image.image.url }}" alt="Дополнительное фото" style="max-width: 200px; border-radius: 4px;">
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'routes:route_detail' route.pk %}#waypoint-{{ note.waypoint.id }}" class="btn btn-primary">
+                    📍 Перейти к точке на карте
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: #666;">
+            <h2>😔 Пока нет отзывов об этом маршруте</h2>
+            <p>Станьте первым, кто оставит отзыв!</p>
+            <a href="{% url 'users:visitnote_create' %}" class="btn btn-primary">📝 Добавить отзыв</a>
+        </div>
+    {% endif %}
+</body>
+</html>

@@ -111,12 +111,17 @@ class VisitNote(models.Model):
         verbose_name="Оценка"
     )
     notes = models.TextField(verbose_name="Заметки о посещении")
-    photos = models.ImageField(
-        upload_to='user_photos/%Y/%m/%d/',
-        blank=True,
-        null=True,
-        verbose_name="Фотографии с посещения"
-    )
+    #photos = models.ImageField(
+    #    upload_to='user_photos/%Y/%m/%d/',
+    #    blank=True,
+    #    null=True,
+    #    verbose_name="Фотографии с посещения"
+    #)
+    @property
+    def main_photo(self):
+        """Возвращает первое фото для обратной совместимости"""
+        return self.images.first()
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -125,6 +130,38 @@ class VisitNote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.waypoint.name} ({self.visit_date})"
+
+# Добавляем после модели VisitNote
+
+class VisitNoteImage(models.Model):
+    visit_note = models.ForeignKey(
+        VisitNote,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(
+        upload_to='visit_notes/%Y/%m/%d/',
+        verbose_name="Фотография"
+    )
+    caption = models.TextField(
+        blank=True,
+        verbose_name="Подпись к фото"
+    )
+    order = models.IntegerField(
+        default=0,
+        verbose_name="Порядок отображения"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Фотография заметки"
+        verbose_name_plural = "Фотографии заметок"
+        ordering = ['visit_note', 'order']
+
+    def __str__(self):
+        return f"Фото для {self.visit_note}"
+
+
 
 # добавим две новые модели: PersonalRoute (сам маршрут) и PersonalRoutePoint (точки в маршруте)
 

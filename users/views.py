@@ -281,8 +281,6 @@ class VisitNoteCreateView(CreateView):
         return context
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
-
         # Проверяем, нет ли уже заметки для этой точки в эту дату
         existing_note = VisitNote.objects.filter(
             user=self.request.user,
@@ -299,12 +297,6 @@ class VisitNoteCreateView(CreateView):
         response = super().form_valid(form)
         messages.success(self.request, f'Заметка о посещении "{form.instance.waypoint.name}" успешно сохранена!')
         return response
-
-    def post(self, request, *args, **kwargs):
-        # Если пользователь подтвердил создание дубликата
-        if request.POST.get('force_save'):
-            return super().post(request, *args, **kwargs)
-        return super().post(request, *args, **kwargs)
 
 class VisitNoteUpdateView(UpdateView):
     model = VisitNote
@@ -332,3 +324,22 @@ class VisitNoteDeleteView(DeleteView):
 
     def get_queryset(self):
         return VisitNote.objects.filter(user=self.request.user)
+
+
+@login_required
+def add_photos_to_visit_note(request, note_id):
+    """Добавление дополнительных фото к заметке"""
+    visit_note = get_object_or_404(VisitNote, id=note_id, user=request.user)
+
+    if request.method == 'POST' and request.FILES:
+        photos = request.FILES.getlist('additional_photos')
+        for i, photo in enumerate(photos):
+            VisitNoteImage.objects.create(
+                visit_note=visit_note,
+                image=photo,
+                order=visit_note.note_images.count() + i
+            )
+        messages.success(request, f'Добавлено {len(photos)} фотографий к заметке')
+        return redirect('users:visitnote_list')
+
+    return redirect('users:visitnote_list')

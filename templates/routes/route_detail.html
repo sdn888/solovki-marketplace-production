@@ -772,6 +772,41 @@
                                 <strong>Участники</strong>
                                 <p>До {{ route.max_participants }} человек</p>
                             </div>
+
+                            <div style="background: #e7f3ff; padding: 1rem; border-radius: 4px; border-left: 4px solid #3498DB;">
+                                <strong>📝 Отзывы посетителей</strong>
+                                <p style="margin: 0.5rem 0 0 0;">
+                                    {% if visit_notes_count > 0 %}
+                                        <a href="{% url 'routes:route_visit_notes' route.pk %}" style="color: #2980B9; text-decoration: none; font-weight: 500;">
+                                            {{ visit_notes_count }} отзыв{{ visit_notes_count|pluralize:"ов" }}
+                                        </a>
+                                        о точках этого маршрута
+                                    {% else %}
+                                        Пока нет отзывов.
+                                        <a href="{% url 'users:visitnote_create' %}" style="color: #2980B9;">Станьте первым!</a>
+                                    {% endif %}
+                                </p>
+
+                                {% if recent_visit_notes %}
+                                <div style="margin-top: 0.75rem;">
+                                    <strong>Последние отзывы:</strong>
+                                    {% for note in recent_visit_notes %}
+                                    <div style="background: white; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+                                        <strong>{{ note.user.username }}</strong> о
+                                        <a href="{% url 'routes:route_detail' route.pk %}#waypoint-{{ note.waypoint.id }}" style="color: #2980B9;">
+                                            {{ note.waypoint.name }}
+                                        </a>
+                                        <div class="rating-stars" style="font-size: 0.9rem; margin: 0.25rem 0;">
+                                            {% with ''|center:note.rating as range %}
+                                                {% for _ in range %}⭐{% endfor %}
+                                            {% endwith %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
                             {% if route.need_food_supply %}
                             <div style="background: #FFF3CD; padding: 0.75rem; border-radius: 4px;">
                                 <strong>🍽️ Важно</strong>
