@@ -814,6 +814,22 @@
                         </div>
                     </div>
 
+                    <!-- Советы по маршруту -->
+                    {% if tips %}
+                    <div class="card">
+                        <div class="card-header">
+                            <span>💡</span>
+                            <h2 class="card-title">Советы по маршруту</h2>
+                        </div>
+                        {% for tip in tips %}
+                        <div class="tip">
+                            <div class="tip-title">{{ tip.title }}</div>
+                            <p>{{ tip.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
                     <!-- Блок экспорта -->
                     <div class="card no-print">
                         <div class="card-header">
@@ -851,22 +867,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Советы по маршруту -->
-                    {% if tips %}
-                    <div class="card">
-                        <div class="card-header">
-                            <span>💡</span>
-                            <h2 class="card-title">Советы по маршруту</h2>
-                        </div>
-                        {% for tip in tips %}
-                        <div class="tip">
-                            <div class="tip-title">{{ tip.title }}</div>
-                            <p>{{ tip.description }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
 
                     <!-- ОТЗЫВЫ ПОСЕТИТЕЛЕЙ - ОТДЕЛЬНЫЙ БЛОК -->
                     <div class="card">

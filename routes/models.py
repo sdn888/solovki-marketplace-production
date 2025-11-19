@@ -92,6 +92,13 @@ class Route(models.Model):
         verbose_name = "Маршрут"
         verbose_name_plural = "Маршруты"
 
+    static_map_image = models.ImageField(
+        upload_to='route_maps/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        verbose_name="Статическое изображение карты маршрута",
+        help_text="Изображение карты маршрута для экспорта в PDF"
+    )
 
 class Waypoint(models.Model):
     WAYPOINT_TYPES = [
