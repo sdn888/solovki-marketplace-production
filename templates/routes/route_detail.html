@@ -506,6 +506,11 @@
             background: #a8a8a8;
         }
 
+        .scrollable-reviews {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 #f1f1f1;
+        }
+
         /* Размеры шрифтов */
         .font-xxsmall { font-size: 12px; }
         .font-xsmall { font-size: 14px; }
@@ -775,7 +780,7 @@
                 </div>
 
                 <div>
-                    <!-- Информация о маршруте -->
+                    <!-- Информация о маршруте (УПРОЩЕННАЯ - без отзывов) -->
                     <div class="card">
                         <div class="card-header">
                             <span>ℹ️</span>
@@ -790,97 +795,14 @@
                                 <strong>Участники</strong>
                                 <p>До {{ route.max_participants }} человек</p>
                             </div>
-
-                            <!-- БЛОК ОТЗЫВОВ - УЛУЧШЕННАЯ ВЕРСИЯ -->
-                            <div style="background: #e7f3ff; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #3498DB; margin: 1rem 0;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                    <strong style="font-size: 1.1rem;">📝 Отзывы посетителей</strong>
-                                    {% if visit_notes_count > 0 %}
-                                    <a href="{% url 'routes:route_visit_notes' route.pk %}"
-                                       style="color: #2980B9; text-decoration: none; font-weight: 500; font-size: 0.9rem;">
-                                        Все отзывы ({{ visit_notes_count }})
-                                    </a>
-                                    {% endif %}
-                                </div>
-
-                                <div style="margin: 0.5rem 0 0 0;">
-                                    {% if visit_notes_count > 0 %}
-                                        <p style="margin-bottom: 1rem; color: #2C3E50;">
-                                            {{ visit_notes_count }} отзыв{{ visit_notes_count|pluralize:"ов" }} о точках этого маршрута
-                                        </p>
-                                    {% else %}
-                                        <p style="margin-bottom: 1rem; color: #2C3E50;">
-                                            Пока нет отзывов.
-                                            <a href="{% url 'users:visitnote_create' %}" style="color: #2980B9; font-weight: 500;">Станьте первым!</a>
-                                        </p>
-                                    {% endif %}
-                                </div>
-
-                                {% if recent_visit_notes %}
-                                <div style="margin-top: 1rem;">
-                                    <strong style="font-size: 0.95rem; color: #2C3E50;">Последние отзывы:</strong>
-                                    <div style="max-height: 300px; overflow-y: auto; margin-top: 0.75rem; padding-right: 5px;" class="scrollable-reviews">
-                                        {% for note in recent_visit_notes %}
-                                        <div style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 0.75rem;
-                                                    border: 1px solid #E1E8ED; transition: all 0.3s ease;"
-                                             onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'"
-                                             onmouseout="this.style.boxShadow='none'">
-
-                                            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-                                                <!-- Аватар пользователя -->
-                                                <div style="width: 40px; height: 40px; background: #3498DB; border-radius: 50%;
-                                                            display: flex; align-items: center; justify-content: center;
-                                                            color: white; font-weight: bold; font-size: 0.9rem; flex-shrink: 0;">
-                                                    {{ note.user.username|first|upper }}
-                                                </div>
-
-                                                <div style="flex-grow: 1; min-width: 0;">
-                                                    <!-- Заголовок -->
-                                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                                        <div>
-                                                            <strong style="color: #2C3E50;">{{ note.user.username }}</strong>
-                                                            <span style="color: #7F8C8D; font-size: 0.85rem; margin-left: 0.5rem;">
-                                                                {{ note.visit_date }}
-                                                            </span>
-                                                        </div>
-                                                        <div class="rating-stars" style="color: #ffc107; font-size: 0.9rem;">
-                                                            {% with ''|center:note.rating as range %}
-                                                                {% for _ in range %}⭐{% endfor %}
-                                                            {% endwith %}
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Точка маршрута -->
-                                                    <div style="margin-bottom: 0.5rem;">
-                                                        <a href="{% url 'routes:route_detail' route.pk %}#waypoint-{{ note.waypoint.id }}"
-                                                           style="color: #2980B9; text-decoration: none; font-weight: 500; font-size: 0.9rem;">
-                                                            📍 {{ note.waypoint.name }}
-                                                        </a>
-                                                    </div>
-
-                                                    <!-- Текст отзыва (обрезанный) -->
-                                                    {% if note.notes %}
-                                                    <div style="color: #2C3E50; font-size: 0.9rem; line-height: 1.4;">
-                                                        {{ note.notes|truncatewords:20 }}
-                                                    </div>
-                                                    {% endif %}
-
-                                                    <!-- Фото (если есть) -->
-                                                    {% if note.photos %}
-                                                    <div style="margin-top: 0.5rem;">
-                                                        <img src="{{ note.photos.url }}" alt="Фото отзыва"
-                                                             style="max-width: 60px; border-radius: 4px; border: 1px solid #E1E8ED;">
-                                                    </div>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endif %}
+                            <div>
+                                <strong>Длительность</strong>
+                                <p>{{ route.duration_hours }} часов</p>
                             </div>
-
+                            <div>
+                                <strong>Тип</strong>
+                                <p>{{ route.get_transport_type_display }}</p>
+                            </div>
                             {% if route.need_food_supply %}
                             <div style="background: #FFF3CD; padding: 0.75rem; border-radius: 4px;">
                                 <strong>🍽️ Важно</strong>
@@ -890,12 +812,12 @@
                         </div>
                     </div>
 
-                    <!-- Советы -->
+                    <!-- Советы по маршруту -->
                     {% if tips %}
                     <div class="card">
                         <div class="card-header">
                             <span>💡</span>
-                            <h2 class="card-title">Советы</h2>
+                            <h2 class="card-title">Советы по маршруту</h2>
                         </div>
                         {% for tip in tips %}
                         <div class="tip">
@@ -905,6 +827,102 @@
                         {% endfor %}
                     </div>
                     {% endif %}
+
+                    <!-- ОТЗЫВЫ ПОСЕТИТЕЛЕЙ - ОТДЕЛЬНЫЙ БЛОК -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span>📝</span>
+                            <h2 class="card-title">Отзывы посетителей</h2>
+                        </div>
+                        <div style="padding: 1rem;">
+                            {% if visit_notes_count > 0 %}
+                                <div style="margin-bottom: 1rem;">
+                                    <p style="color: #2C3E50; margin-bottom: 0.5rem;">
+                                        <strong>{{ visit_notes_count }} отзыв{{ visit_notes_count|pluralize:"ов" }}</strong> о точках этого маршрута
+                                    </p>
+                                    <a href="{% url 'routes:route_visit_notes' route.pk %}"
+                                       style="color: #2980B9; text-decoration: none; font-weight: 500; font-size: 0.9rem;">
+                                        📖 Посмотреть все отзывы
+                                    </a>
+                                </div>
+                            {% else %}
+                                <p style="color: #666; text-align: center; padding: 1rem 0;">
+                                    Пока нет отзывов об этом маршруте
+                                </p>
+                            {% endif %}
+
+                            {% if recent_visit_notes %}
+                            <div style="max-height: 400px; overflow-y: auto; margin-top: 1rem; padding-right: 5px;" class="scrollable-reviews">
+                                {% for note in recent_visit_notes %}
+                                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 0.75rem;
+                                            border: 1px solid #E1E8ED;">
+
+                                    <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                                        <!-- Аватар пользователя -->
+                                        <div style="width: 36px; height: 36px; background: #3498DB; border-radius: 50%;
+                                                    display: flex; align-items: center; justify-content: center;
+                                                    color: white; font-weight: bold; font-size: 0.8rem; flex-shrink: 0;">
+                                            {{ note.user.username|first|upper }}
+                                        </div>
+
+                                        <div style="flex-grow: 1; min-width: 0;">
+                                            <!-- Заголовок -->
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                                <div>
+                                                    <strong style="color: #2C3E50; font-size: 0.95rem;">{{ note.user.username }}</strong>
+                                                    <span style="color: #7F8C8D; font-size: 0.8rem; margin-left: 0.5rem;">
+                                                        {{ note.visit_date }}
+                                                    </span>
+                                                </div>
+                                                <div style="color: #ffc107; font-size: 0.85rem;">
+                                                    {% with ''|center:note.rating as range %}
+                                                        {% for _ in range %}⭐{% endfor %}
+                                                    {% endwith %}
+                                                </div>
+                                            </div>
+
+                                            <!-- Точка маршрута -->
+                                            <div style="margin-bottom: 0.5rem;">
+                                                <a href="{% url 'routes:route_detail' route.pk %}#waypoint-{{ note.waypoint.id }}"
+                                                   style="color: #2980B9; text-decoration: none; font-weight: 500; font-size: 0.85rem;">
+                                                    📍 {{ note.waypoint.name }}
+                                                </a>
+                                            </div>
+
+                                            <!-- Текст отзыва (обрезанный) -->
+                                            {% if note.notes %}
+                                            <div style="color: #2C3E50; font-size: 0.85rem; line-height: 1.4;">
+                                                {{ note.notes|truncatewords:15 }}
+                                                {% if note.notes|wordcount > 15 %}
+                                                <span style="color: #7F8C8D; font-size: 0.8rem;">[...]</span>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            {% if user.is_authenticated %}
+                            <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E1E8ED;">
+                                <a href="{% url 'users:visitnote_create' %}"
+                                   class="btn"
+                                   style="background: var(--aurora); color: white; padding: 8px 16px; font-size: 0.9rem;">
+                                    ✏️ Добавить свой отзыв
+                                </a>
+                            </div>
+                            {% else %}
+                            <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E1E8ED;">
+                                <a href="{% url 'admin:login' %}?next={{ request.path }}"
+                                   style="color: #2980B9; text-decoration: none; font-size: 0.9rem;">
+                                    🔒 Войдите, чтобы оставить отзыв
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
