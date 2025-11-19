@@ -29,4 +29,5 @@ urlpatterns = [
     path('visit-notes/<int:pk>/edit/', VisitNoteUpdateView.as_view(), name='visitnote_update'),
     path('visit-notes/<int:pk>/delete/', VisitNoteDeleteView.as_view(), name='visitnote_delete'),
     path('visit-notes/<int:note_id>/add-photos/', views.add_photos_to_visit_note, name='visitnote_add_photos'),
+    path('personal-routes/<int:pk>/export-pdf/', views.personal_route_export_pdf, name='personal_route_export_pdf'),
 ]

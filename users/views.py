@@ -12,6 +12,7 @@ from django.db import transaction
 from .forms import VisitNoteForm
 from django.utils import timezone
 from django.db.models import Q
+from routes.export_utils import generate_route_pdf, generate_route_gpx
 
 
 @login_required
@@ -354,3 +355,35 @@ def add_photos_to_visit_note(request, note_id):
         return redirect('users:visitnote_list')
 
     return redirect('users:visitnote_list')
+
+
+def personal_route_export_pdf(request, pk):
+    """Экспорт персонального маршрута в PDF"""
+    personal_route = get_object_or_404(PersonalRoute, pk=pk, user=request.user)
+    points = personal_route.points.all().select_related('waypoint').order_by('order')
+
+    # Создаем временный объект маршрута для экспорта
+    class TempRoute:
+        def __init__(self, personal_route):
+            self.title = personal_route.title
+            self.description = personal_route.description
+            self.theme = 'personal'
+            self.duration_hours = 0
+            self.transport_type = 'foot'
+            self.price = None
+            self.need_food_supply = False
+            self.max_participants = 1
+
+        def get_theme_display(self):
+            return "Персональный маршрут"
+
+        def get_transport_type_display(self):
+            return "Пеший"
+
+    temp_route = TempRoute(personal_route)
+    waypoints = [point.waypoint for point in points]
+
+    pdf_buffer = generate_route_pdf(temp_route, waypoints)
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{personal_route.title}.pdf"'
+    return response

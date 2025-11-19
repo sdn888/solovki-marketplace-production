@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from .models import Route, Waypoint
 from users.models import VisitNote
+from django.http import HttpResponse
+from .export_utils import generate_route_pdf, generate_route_gpx
 
 
 def route_list(request):
@@ -89,3 +91,31 @@ def route_visit_notes(request, pk):
         'route': route,
         'visit_notes': visit_notes
     })
+
+
+def route_export_pdf(request, pk):
+    """Экспорт маршрута в PDF"""
+    route = get_object_or_404(Route, pk=pk, is_active=True)
+    waypoints = route.waypoints.all().order_by('order')
+
+    # Генерируем PDF
+    pdf_buffer = generate_route_pdf(route, waypoints)
+
+    # Создаем HTTP-ответ
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{route.title}_маршрут.pdf"'
+    return response
+
+
+def route_export_gpx(request, pk):
+    """Экспорт маршрута в GPX"""
+    route = get_object_or_404(Route, pk=pk, is_active=True)
+    waypoints = route.waypoints.all().order_by('order')
+
+    # Генерируем GPX
+    gpx_content = generate_route_gpx(route, waypoints)
+
+    # Создаем HTTP-ответ
+    response = HttpResponse(gpx_content, content_type='application/gpx+xml')
+    response['Content-Disposition'] = f'attachment; filename="{route.title}.gpx"'
+    return response

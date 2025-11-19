@@ -630,6 +630,8 @@
                         {% endif %}
                     </div>
 
+
+
                     <!-- Точки маршрута -->
                     <div class="card">
                         <div class="card-header">
@@ -809,6 +811,44 @@
                                 <p style="margin: 0.25rem 0 0 0;">Рекомендуется взять запас еды</p>
                             </div>
                             {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Блок экспорта -->
+                    <div class="card no-print">
+                        <div class="card-header">
+                            <span>📤</span>
+                            <h2 class="card-title">Экспорт маршрута</h2>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <p style="margin-bottom: 1rem; color: var(--text-light);">
+                                Сохраните маршрут для оффлайн-использования или навигационных устройств
+                            </p>
+
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <a href="{% url 'routes:route_export_pdf' route.pk %}"
+                                   class="btn"
+                                   style="background: #E74C3C; color: white; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: 500;">
+                                    📄 PDF
+                                </a>
+
+                                <a href="{% url 'routes:route_export_gpx' route.pk %}"
+                                   class="btn"
+                                   style="background: #27AE60; color: white; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: 500;">
+                                    🗂️ GPX
+                                </a>
+                            </div>
+
+                            <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-light);">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                    <span style="color: #E74C3C;">📄 PDF</span>
+                                    <span>— для печати и чтения</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="color: #27AE60;">🗂️ GPX</span>
+                                    <span>— для навигационных приложений и устройств</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
