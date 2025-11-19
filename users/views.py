@@ -191,7 +191,7 @@ def remove_point_from_personal_route(request, route_id, point_id):
             p.save()
 
         messages.success(request, f'Точка "{point_name}" удалена из маршрута "{personal_route.title}"')
-        return redirect('users:personal_route_detail', route_id=personal_route.id)
+        return redirect('users:personal_route_detail', pk=personal_route.id)
 
     # Если это GET-запрос, показываем страницу подтверждения
     return render(request, 'users/personal_route_point_confirm_delete.html', {
