@@ -6,8 +6,9 @@ from routes.models import Waypoint  # Импортируем модель точ
 class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ('tourist', 'Турист'),
+        ('traveler', 'Путешественник'),
         ('guide', 'Гид'),
-        ('operator', 'Оператор маршрутов'),
+        ('expert_guide', 'Гид-эксперт'),
         ('admin', 'Администратор'),
     ]
 
@@ -31,6 +32,32 @@ class CustomUser(AbstractUser):
     bio = models.TextField(
         blank=True,
         verbose_name="О себе"
+    )
+
+    subscription_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('free', 'Бесплатный'),
+            ('basic', 'Базовый'),
+            ('premium', 'Премиум'),
+        ],
+        default='free',
+        verbose_name="Тип подписки"
+    )
+
+    subscription_expires = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Подписка действует до"
+    )
+
+    # Профиль гида - пока просто связь, модель создадим ниже
+    guide_profile = models.OneToOneField(
+        'GuideProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user'
     )
 
     def __str__(self):
@@ -225,3 +252,63 @@ class PersonalRoutePoint(models.Model):
     def __str__(self):
         return f"{self.order}. {self.waypoint.name} (в {self.route.title})"
 
+
+# Добавляем ПОСЛЕ всех существующих моделей (VisitNote, PersonalRoute, etc.)
+
+class GuideProfile(models.Model):
+    """Расширенный профиль для гидов"""
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='guide_profile_rel'
+    )
+
+    bio = models.TextField(verbose_name="Биография", blank=True)
+    experience_years = models.IntegerField(
+        default=0,
+        verbose_name="Опыт работы (лет)"
+    )
+    specialties = models.TextField(
+        verbose_name="Специализации",
+        help_text="Через запятую",
+        blank=True
+    )
+
+    # Контактная информация для клиентов
+    contact_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Контактный телефон"
+    )
+    contact_email = models.EmailField(
+        blank=True,
+        verbose_name="Контактный email"
+    )
+
+    # Социальные сети
+    website = models.URLField(blank=True, verbose_name="Веб-сайт")
+    vk_url = models.URLField(blank=True, verbose_name="VK")
+    telegram = models.CharField(max_length=100, blank=True, verbose_name="Telegram")
+
+    # Верификация
+    is_verified = models.BooleanField(default=False, verbose_name="Верифицирован")
+    verification_documents = models.FileField(
+        upload_to='guide_documents/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        verbose_name="Документы для верификации"
+    )
+
+    # Рейтинги и статистика
+    average_rating = models.FloatField(default=0.0, verbose_name="Средний рейтинг")
+    completed_tours = models.IntegerField(default=0, verbose_name="Проведено туров")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Профиль гида: {self.user.username}"
+
+    class Meta:
+        verbose_name = "Профиль гида"
+        verbose_name_plural = "Профили гидов"
