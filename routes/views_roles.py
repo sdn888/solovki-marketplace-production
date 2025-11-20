@@ -300,11 +300,21 @@ def update_waypoints_order(request, route_id):
             print(f"Данные порядка: {order_data}")
 
             with transaction.atomic():
-                # Устанавливаем новый порядок
+
+                # Используем временное смещение чтобы избежать конфликтов
+                temp_offset = 10000
+
+                # Сначала устанавливаем временные порядки
+                for item in order_data:
+                    waypoint_id = item.get('waypoint_id')
+                    waypoint = get_object_or_404(Waypoint, id=waypoint_id, route=route)
+                    waypoint.order = temp_offset + waypoint_id
+                    waypoint.save()
+
+                # Затем устанавливаем финальные порядки
                 for item in order_data:
                     waypoint_id = item.get('waypoint_id')
                     new_order = item.get('order')
-
                     waypoint = get_object_or_404(Waypoint, id=waypoint_id, route=route)
                     waypoint.order = new_order
                     waypoint.save()
