@@ -408,47 +408,51 @@
         <div class="container">
             <h1>Соловецкие острова</h1>
             <p>Туристические маршруты по историческим и природным достопримечательностям</p>
-            <div style="margin-top: 1rem;">
+            <!-- ЗАМЕНЯЕМ блок навигации -->
+            <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'users:favorite_list' %}"
-                       style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
-                        ⭐ Избранное
-                    </a>
-                    <a href="{% url 'users:personal_route_list' %}"
-                       style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
-                        🗺️ Мои маршруты
-                    </a>
-                    <a href="{% url 'users:visitnote_list' %}"
-                       style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
-                        📝 Мои заметки
-                    </a>
+                    <span style="color: white; margin-right: 10px; font-weight: 500;">👋 {{ user.username }}</span>
 
-                    <!-- НОВЫЕ КНОПКИ ДЛЯ ГИДОВ И МОДЕРАТОРОВ -->
-                    {% if user_can_create_routes %}
-                        <a href="{% url 'routes:route_create' %}"
-                           style="color: white; background: var(--aurora); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
-                            🗺️ Создать маршрут
-                        </a>
-                        <a href="{% url 'routes:user_routes' %}"
-                           style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
-                            📋 Мои маршруты
-                        </a>
-                    {% endif %}
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <a href="{% url 'users:favorite_list' %}" class="nav-btn">⭐ Избранное</a>
+                        <a href="{% url 'users:personal_route_list' %}" class="nav-btn">🗺️ Персональные</a>
+                        <a href="{% url 'users:visitnote_list' %}" class="nav-btn">📝 Заметки</a>
 
-                    {% if user_is_admin or user_is_expert_guide %}
-                        <a href="{% url 'routes:moderation_queue' %}"
-                           style="color: white; background: #E74C3C; padding: 8px 16px; border-radius: 4px; text-decoration: none;">
-                            ⚡ Модерация
-                        </a>
-                    {% endif %}
+                        {% if user_can_create_routes %}
+                            <a href="{% url 'routes:route_create' %}" class="nav-btn" style="background: var(--aurora);">🗺️ Создать</a>
+                            <a href="{% url 'routes:user_routes' %}" class="nav-btn">📋 Маршруты гида</a>
+                        {% endif %}
 
+                        {% if user_is_admin or user_is_expert_guide %}
+                            <a href="{% url 'routes:moderation_queue' %}" class="nav-btn" style="background: #E74C3C;">⚡ Модерация</a>
+                        {% endif %}
+
+                        <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-btn">🚪 Выйти</button>
+                        </form>
+                    </div>
                 {% else %}
-                    <a href="{% url 'admin:login' %}?next={{ request.path }}"
-                       style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
-                        🔒 Войти в систему
-                    </a>
+                    <a href="{% url 'login' %}" class="nav-btn">🔒 Войти</a>
                 {% endif %}
             </div>
+
+            <style>
+            .nav-btn {
+                display: inline-block;
+                color: white;
+                background: rgba(255,255,255,0.2);
+                padding: 6px 12px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                border: none;
+                cursor: pointer;
+                font-family: inherit;
+                line-height: normal;
+            }
+            </style>
         </div>
     </header>
 

@@ -4,6 +4,7 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.utils.decorators import method_decorator
 
 from .models import Route
 from .forms import RouteForm
