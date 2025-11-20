@@ -1,18 +1,29 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from .models import Route, Waypoint
 from users.models import VisitNote
-from django.http import HttpResponse
 from .export_utils import generate_route_pdf, generate_route_gpx
+from users.utils import is_guide, can_create_route
 
 
 def route_list(request):
     routes = Route.objects.filter(is_active=True).prefetch_related('tips', 'waypoints')
+
+    # ДОБАВЛЯЕМ базовую фильтрацию по статусу
+    routes = routes.filter(status='published')
+
     return render(request, 'routes/route_list.html', {'routes': routes})
 
 
 def route_detail(request, pk):
     route = get_object_or_404(Route, pk=pk, is_active=True)
+
+    # ДОБАВЛЯЕМ проверку статуса маршрута
+    if route.status != 'published':
+        # Проверяем права доступа для неопубликованных маршрутов
+        if not request.user.is_authenticated or (request.user != route.author and not request.user.is_staff):
+            return HttpResponseForbidden("Маршрут не доступен для просмотра")
+
     waypoints = route.waypoints.all().order_by('order').prefetch_related('images')
     tips = route.tips.all().order_by('order')
 
