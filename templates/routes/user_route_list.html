@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои маршруты - Solovki</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" />    <!-- Используем те же стили, что и в route_list.html -->
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+            --sunset: #E74C3C;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--stone);
+            font-size: 1.1rem;
+        }
+
+        /* Route Cards - УЛУЧШЕННАЯ ВЕРСИЯ */
+        .route-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .route-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+        }
+
+        /* Улучшенная галерея изображений */
+        .route-gallery {
+            height: 220px;
+            position: relative;
+            overflow: hidden;
+            background: var(--sea-dark);
+        }
+
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            height: 100%;
+            gap: 2px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            background: var(--sea-deep);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
+            display: flex;
+            align-items: flex-end;
+            padding: 0.75rem;
+            color: white;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+        }
+
+        /* Если изображений меньше 4 */
+        .gallery-single {
+            grid-column: 1 / -1;
+            grid-row: 1 / -1;
+        }
+
+        .gallery-double {
+            grid-column: 1 / -1;
+            grid-row: 1 / -1;
+        }
+
+        .gallery-triple-1 {
+            grid-column: 1 / -1;
+            grid-row: 1;
+        }
+
+        .gallery-triple-2 {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .gallery-triple-3 {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .route-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--aurora);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .route-content {
+            padding: 1.75rem;
+        }
+
+        .route-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--sea-deep);
+            line-height: 1.3;
+        }
+
+        .route-description {
+            color: var(--text-light);
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .route-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1.25rem 0;
+            padding: 1rem;
+            background: rgba(26, 188, 156, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--aurora);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.25rem;
+        }
+
+        .meta-icon {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--sea-deep);
+        }
+
+        .route-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-tag {
+            background: rgba(52, 152, 219, 0.1);
+            color: #2980B9;
+            padding: 0.3rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+
+        .feature-tag.food {
+            background: rgba(243, 156, 18, 0.1);
+            color: #D35400;
+            border-color: rgba(243, 156, 18, 0.2);
+        }
+
+        .feature-tag.parking {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27AE60;
+            border-color: rgba(39, 174, 96, 0.2);
+        }
+
+        .feature-tag.wheelchair {
+            background: rgba(155, 89, 182, 0.1);
+            color: #8E44AD;
+            border-color: rgba(155, 89, 182, 0.2);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--sea-deep);
+            color: white;
+            padding: 0.85rem 1.75rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover {
+            background: var(--sea-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
+        }
+
+        .btn-icon {
+            margin-left: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Улучшенные заглушки */
+        .placeholder-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: white;
+            padding: 1rem;
+        }
+
+        .placeholder-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .placeholder-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .placeholder-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .placeholder-hint {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 1rem;
+        }
+
+        /* Пустое состояние */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+
+        .empty-state h2 {
+            margin-bottom: 1rem;
+            color: var(--sea-dark);
+        }
+
+        /* Футер */
+        .footer {
+            background: var(--sea-deep);
+            color: var(--stone);
+            text-align: center;
+            padding: 2.5rem 0;
+            margin-top: 4rem;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .route-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .route-gallery {
+                height: 200px;
+            }
+
+            .route-content {
+                padding: 1.5rem;
+            }
+
+            .route-meta {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .route-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .route-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .route-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .route-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>🗺️ Мои маршруты</h1>
+            <p>Здесь собраны все маршруты, созданные вами</p>
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'routes:route_list' %}"
+                   style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
+                    ← Все маршруты
+                </a>
+                <a href="{% url 'routes:route_create' %}"
+                   style="color: white; background: var(--aurora); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
+                    ➕ Создать маршрут
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        {% if routes %}
+        <div class="route-grid">
+            {% for route in routes %}
+            <article class="route-card">
+                <!-- Галерея и контент как в route_list.html -->
+                <div class="route-gallery">
+                    <span class="route-badge">{{ route.get_status_display }}</span>
+                    <div class="gallery-container">
+                        {% with route.get_gallery_images as images %}
+                            {% if images %}
+                                {% for image in images|slice:":4" %}
+                                    <div class="gallery-item {% if images|length == 1 %}gallery-single{% elif images|length == 2 %}gallery-double{% elif images|length == 3 and forloop.counter == 1 %}gallery-triple-1{% elif images|length == 3 and forloop.counter == 2 %}gallery-triple-2{% elif images|length == 3 and forloop.counter == 3 %}gallery-triple-3{% endif %}">
+                                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:route.title }}">
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="gallery-item gallery-single" style="background: linear-gradient(135deg, #3498db, #2c3e50);">
+                                    <div class="placeholder-content">
+                                        <div class="placeholder-icon">🗺️</div>
+                                        <div class="placeholder-title">{{ route.title }}</div>
+                                        <div class="placeholder-subtitle">{{ route.get_status_display }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <div class="route-content">
+                    <h2 class="route-title">{{ route.title }}</h2>
+                    <p class="route-description">{{ route.description|truncatewords:25 }}</p>
+
+                    <div class="route-meta">
+                        <div class="meta-item">
+                            <div class="meta-icon">⏱</div>
+                            <div class="meta-label">Длительность</div>
+                            <div class="meta-value">{{ route.duration_hours }} ч</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">📊</div>
+                            <div class="meta-label">Статус</div>
+                            <div class="meta-value">{{ route.get_status_display }}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-icon">👁️</div>
+                            <div class="meta-label">Просмотры</div>
+                            <div class="meta-value">{{ route.views_count }}</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                        <a href="{% url 'routes:route_detail' route.pk %}" class="btn" style="flex: 2;">
+                            Просмотреть
+                        </a>
+                        <a href="{% url 'routes:route_update' route.pk %}" class="btn" style="flex: 1; background: #3498DB;">
+                            ✏️
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h2>У вас пока нет созданных маршрутов</h2>
+            <p>Создайте свой первый маршрут и поделитесь им с другими путешественниками!</p>
+            <a href="{% url 'routes:route_create' %}" class="btn" style="display: inline-flex; width: auto; margin-top: 1rem;">
+                🗺️ Создать первый маршрут
+            </a>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>
