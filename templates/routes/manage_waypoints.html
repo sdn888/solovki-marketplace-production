@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление точками маршрута - {{ route.title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+            --sunset: #E74C3C;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--text-dark);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: var(--stone);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .waypoint-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--aurora);
+            transition: all 0.3s ease;
+        }
+
+        .waypoint-card.sortable-ghost {
+            opacity: 0.4;
+        }
+
+        .waypoint-card.sortable-chosen {
+            transform: rotate(2deg);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .waypoint-handle {
+            cursor: grab;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-edit {
+            background: #3498DB;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        #save-message {
+            display: none;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .waypoint-card {
+                padding: 1.25rem;
+            }
+
+            .waypoint-handle {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'routes:route_detail' route.pk %}" class="back-link">
+            ← Назад к маршруту
+        </a>
+        <h1>📍 Управление точками маршрута</h1>
+        <p>Маршрут: <strong>{{ route.title }}</strong></p>
+
+        <div style="margin-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'routes:create_waypoint' route.id %}" class="btn btn-primary">
+                ➕ Добавить точку
+            </a>
+            <a href="{% url 'routes:route_detail' route.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+                👁️ Просмотреть маршрут
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div id="save-message">
+        ✅ Порядок точек сохранен!
+    </div>
+
+    {% if waypoints %}
+    <div id="waypoints-list">
+        {% for waypoint in waypoints %}
+        <div class="waypoint-card" data-waypoint-id="{{ waypoint.id }}">
+            <div class="waypoint-handle">
+                <span>☰</span>
+                <span>Порядок: {{ waypoint.order }}</span>
+            </div>
+
+            <h3>{{ waypoint.order }}. {{ waypoint.name }}</h3>
+            <p><strong>Тип:</strong> {{ waypoint.get_waypoint_type_display }}</p>
+            <p><strong>Координаты:</strong> {{ waypoint.latitude }}, {{ waypoint.longitude }}</p>
+
+            {% if waypoint.short_description %}
+            <p>{{ waypoint.short_description }}</p>
+            {% endif %}
+
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'routes:edit_waypoint' waypoint.pk %}" class="btn btn-edit">✏️ Редактировать</a>
+                <a href="{% url 'routes:delete_waypoint' waypoint.pk %}" class="btn btn-danger">🗑️ Удалить</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>😔 В этом маршруте пока нет точек</h2>
+            <p>Добавьте первую точку маршрута!</p>
+            <a href="{% url 'routes:create_waypoint' route.id %}" class="btn btn-primary">
+                📍 Добавить первую точку
+            </a>
+        </div>
+    {% endif %}
+
+    <script>
+        // Инициализация Drag & Drop
+        document.addEventListener('DOMContentLoaded', function() {
+            const waypointsList = document.getElementById('waypoints-list');
+
+            if (waypointsList && typeof Sortable !== 'undefined') {
+                const sortable = Sortable.create(waypointsList, {
+                    handle: '.waypoint-handle',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    animation: 150,
+
+                    onEnd: function(evt) {
+                        updateWaypointsOrder();
+                    }
+                });
+            }
+        });
+
+        // Функция обновления порядка точек
+        function updateWaypointsOrder() {
+            const waypoints = document.querySelectorAll('.waypoint-card');
+            const orderData = [];
+
+            waypoints.forEach((waypoint, index) => {
+                const waypointId = waypoint.getAttribute('data-waypoint-id');
+                orderData.push({
+                    waypoint_id: parseInt(waypointId),
+                    order: index + 1
+                });
+
+                // Обновляем отображаемый порядок
+                const orderElement = waypoint.querySelector('.waypoint-handle span:last-child');
+                if (orderElement) {
+                    orderElement.textContent = `Порядок: ${index + 1}`;
+                }
+
+                // Обновляем заголовок
+                const titleElement = waypoint.querySelector('h3');
+                if (titleElement) {
+                    const currentText = titleElement.textContent;
+                    const newText = currentText.replace(/^\d+\./, `${index + 1}.`);
+                    titleElement.textContent = newText;
+                }
+            });
+
+            // Отправляем данные на сервер
+            fetch(`/routes/{{ route.id }}/update-waypoints-order/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ order: orderData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showSaveMessage();
+                } else {
+                    alert('Ошибка при сохранении порядка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при сохранении порядка');
+            });
+        }
+
+        // Функция для получения CSRF токена
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfToken ? csrfToken.value : '';
+        }
+
+        // Функция показа сообщения о сохранении
+        function showSaveMessage() {
+            const message = document.getElementById('save-message');
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

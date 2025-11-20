@@ -28,9 +28,9 @@ def favorite_add(request, waypoint_id):
     )
 
     if created:
-        messages.success(request, f'Точка "{waypoint.name}" добавлена в избранное!')
+        messages.success(request, f'✅ Точка "{waypoint.name}" успешно добавлена в избранное!')
     else:
-        messages.info(request, f'Точка "{waypoint.name}" уже в избранном')
+        messages.info(request, f'ℹ️ Точка "{waypoint.name}" уже находится в избранном')
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'added' if created else 'already_exists'})
@@ -48,7 +48,7 @@ def favorite_remove(request, waypoint_id):
         waypoint=waypoint
     ).delete()
 
-    messages.success(request, f'Точка "{waypoint.name}" удалена из избранного')
+    messages.success(request, f'✅ Точка "{waypoint.name}" успешно удалена из избранного')
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'status': 'removed'})
@@ -85,14 +85,14 @@ def update_favorite_priority(request, favorite_id):
         if new_priority and new_priority.isdigit():
             favorite.priority = int(new_priority)
             favorite.save()
-            messages.success(request, 'Приоритет обновлен')
+            messages.success(request, f'✅ Приоритет точки "{favorite.waypoint.name}" успешно обновлен на {favorite.get_priority_display()}')
 
         return redirect('users:favorite_list')
 
 class PersonalRouteListView(ListView):
     model = PersonalRoute
     template_name = 'users/personal_route_list.html'
-    context_object_name = 'personal_routes'  # Измените с 'routes' на 'personal_routes'
+    context_object_name = 'personal_routes'
 
     def get_queryset(self):
         return PersonalRoute.objects.filter(user=self.request.user)
@@ -106,11 +106,11 @@ class PersonalRouteCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        messages.success(self.request, f'✅ Персональный маршрут "{form.instance.title}" успешно создан!')
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Добавляем COLOR_CHOICES в контекст для шаблона
         context['color_choices'] = PersonalRoute.COLOR_CHOICES
         return context
 
@@ -129,6 +129,10 @@ class PersonalRouteUpdateView(UpdateView):
         context['color_choices'] = PersonalRoute.COLOR_CHOICES
         return context
 
+    def form_valid(self, form):
+        messages.success(self.request, f'✅ Персональный маршрут "{form.instance.title}" успешно обновлен!')
+        return super().form_valid(form)
+
 class PersonalRouteDeleteView(DeleteView):
     model = PersonalRoute
     template_name = 'users/personal_route_confirm_delete.html'
@@ -137,17 +141,21 @@ class PersonalRouteDeleteView(DeleteView):
     def get_queryset(self):
         return PersonalRoute.objects.filter(user=self.request.user)
 
+    def delete(self, request, *args, **kwargs):
+        personal_route = self.get_object()
+        messages.success(request, f'✅ Персональный маршрут "{personal_route.title}" успешно удален!')
+        return super().delete(request, *args, **kwargs)
+
 class PersonalRouteDetailView(DetailView):
     model = PersonalRoute
     template_name = 'users/personal_route_detail.html'
-    context_object_name = 'personal_route'  # ИЗМЕНИЛИ НА personal_route
+    context_object_name = 'personal_route'
 
     def get_queryset(self):
         return PersonalRoute.objects.filter(user=self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Добавляем точки маршрута в контекст
         context['points'] = self.object.points.all().select_related('waypoint', 'waypoint__route')
         return context
 
@@ -167,14 +175,14 @@ def add_point_to_personal_route(request, route_id, waypoint_id):
     ).first()
 
     if existing_point:
-        messages.info(request, f'Точка "{waypoint.name}" уже есть в маршруте "{personal_route.title}"')
+        messages.info(request, f'ℹ️ Точка "{waypoint.name}" уже есть в маршруте "{personal_route.title}"')
     else:
         PersonalRoutePoint.objects.create(
             route=personal_route,
             waypoint=waypoint,
             order=next_order
         )
-        messages.success(request, f'Точка "{waypoint.name}" добавлена в маршрут "{personal_route.title}"')
+        messages.success(request, f'✅ Точка "{waypoint.name}" успешно добавлена в маршрут "{personal_route.title}"')
 
     # Возвращаем на страницу, откуда пришел запрос
     return redirect(request.META.get('HTTP_REFERER', 'home'))
@@ -196,7 +204,7 @@ def remove_point_from_personal_route(request, route_id, point_id):
             p.order = index
             p.save()
 
-        messages.success(request, f'Точка "{point_name}" удалена из маршрута "{personal_route.title}"')
+        messages.success(request, f'✅ Точка "{point_name}" успешно удалена из маршрута "{personal_route.title}"')
         return redirect('users:personal_route_detail', pk=personal_route.id)
 
     # Если это GET-запрос, показываем страницу подтверждения
@@ -307,7 +315,7 @@ class VisitNoteCreateView(CreateView):
         else:
             print("Фото НЕ сохранено!")
 
-        messages.success(self.request, f'Заметка о посещении "{form.instance.waypoint.name}" успешно сохранена!')
+        messages.success(self.request, f'✅ Заметка о посещении "{form.instance.waypoint.name}" успешно сохранена!')
         return response
 
 class VisitNoteUpdateView(UpdateView):
@@ -326,7 +334,7 @@ class VisitNoteUpdateView(UpdateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, f'Заметка о посещении "{form.instance.waypoint.name}" успешно обновлена!')
+        messages.success(self.request, f'✅ Заметка о посещении "{form.instance.waypoint.name}" успешно обновлена!')
         return response
 
 class VisitNoteDeleteView(DeleteView):
@@ -336,6 +344,11 @@ class VisitNoteDeleteView(DeleteView):
 
     def get_queryset(self):
         return VisitNote.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        visit_note = self.get_object()
+        messages.success(request, f'✅ Заметка о посещении "{visit_note.waypoint.name}" успешно удалена!')
+        return super().delete(request, *args, **kwargs)
 
 
 @login_required
@@ -351,7 +364,7 @@ def add_photos_to_visit_note(request, note_id):
                 image=photo,
                 order=visit_note.note_images.count() + i
             )
-        messages.success(request, f'Добавлено {len(photos)} фотографий к заметке')
+        messages.success(request, f'✅ Успешно добавлено {len(photos)} фотографий к заметке о посещении "{visit_note.waypoint.name}"')
         return redirect('users:visitnote_list')
 
     return redirect('users:visitnote_list')

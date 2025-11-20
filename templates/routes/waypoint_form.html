@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if form.instance.pk %}Редактирование{% else %}Создание{% endif %} точки - Solovki</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea.form-control {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+            border-left: 4px solid var(--aurora);
+        }
+
+        .form-section h3 {
+            margin-top: 0;
+            color: var(--sea-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'routes:manage_waypoints' route.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к управлению точками
+        </a>
+        <h1>{% if form.instance.pk %}✏️ Редактирование точки{% else %}📍 Создание новой точки{% endif %}</h1>
+        <p>Маршрут: <strong>{{ route.title }}</strong></p>
+    </div>
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 1rem;">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Основная информация -->
+            <div class="form-section">
+                <h3>📝 Основная информация</h3>
+
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Название точки *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div style="color: #dc3545; font-size: 0.875em; margin-top: 0.25rem;">
+                        {{ form.name.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.waypoint_type.id_for_label }}">Тип точки *</label>
+                    {{ form.waypoint_type }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.short_description.id_for_label }}">Краткое описание</label>
+                    {{ form.short_description }}
+                </div>
+            </div>
+
+            <!-- Координаты -->
+            <div class="form-section">
+                <h3>📍 Координаты</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.latitude.id_for_label }}">Широта *</label>
+                        {{ form.latitude }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.longitude.id_for_label }}">Долгота *</label>
+                        {{ form.longitude }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Детальное описание -->
+            <div class="form-section">
+                <h3>📖 Детальное описание</h3>
+
+                <div class="form-group">
+                    <label for="{{ form.detailed_description.id_for_label }}">Подробное описание</label>
+                    {{ form.detailed_description }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.history_info.id_for_label }}">Историческая справка</label>
+                    {{ form.history_info }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.architecture_info.id_for_label }}">Архитектура и особенности</label>
+                    {{ form.architecture_info }}
+                </div>
+            </div>
+
+            <!-- Особенности посещения -->
+            <div class="form-section">
+                <h3>🎯 Особенности посещения</h3>
+
+                <div class="form-group">
+                    <label for="{{ form.visit_notes.id_for_label }}">Особенности посещения</label>
+                    {{ form.visit_notes }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.path_description.id_for_label }}">Описание пути</label>
+                    {{ form.path_description }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.best_time_to_visit.id_for_label }}">Лучшее время для посещения</label>
+                    {{ form.best_time_to_visit }}
+                </div>
+            </div>
+
+            <!-- Практическая информация -->
+            <div class="form-section">
+                <h3>ℹ️ Практическая информация</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.difficulty.id_for_label }}">Сложность</label>
+                        {{ form.difficulty }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.estimated_stay_minutes.id_for_label }}">Время на посещение (мин)</label>
+                        {{ form.estimated_stay_minutes }}
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            {{ form.has_food }}
+                            <span>🍽️ Есть питание</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            {{ form.has_toilets }}
+                            <span>🚻 Туалеты</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            {{ form.has_parking }}
+                            <span>🅿️ Парковка</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        {{ form.is_wheelchair_accessible }}
+                        <span>♿ Доступно для инвалидов</span>
+                    </label>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        {{ form.is_optional }}
+                        <span>🔀 Опциональная точка</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                    {% if form.instance.pk %}💾 Сохранить изменения{% else %}📝 Создать точку{% endif %}
+                </button>
+                <a href="{% url 'routes:manage_waypoints' route.pk %}" class="btn btn-secondary">
+                    ❌ Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

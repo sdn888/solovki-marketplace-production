@@ -165,6 +165,83 @@
                 display: none !important;
             }
         }
+
+        /* Адаптивность для personal_route_list */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                max-width: 100%;
+            }
+
+            .route-card {
+                padding: 1.25rem;
+            }
+
+            .route-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .route-header > div {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                position: static;
+                margin: 0 auto 1rem auto;
+                width: fit-content;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 1.5rem;
+            }
+
+            .route-card {
+                padding: 1rem;
+            }
+
+            .route-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .nav-btn {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 1.25rem;
+            }
+
+            .route-title {
+                font-size: 1.2rem;
+            }
+
+            .empty-state {
+                padding: 40px 15px;
+            }
+        }
     </style>
 </head>
 <body class="font-medium">

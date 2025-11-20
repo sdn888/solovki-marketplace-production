@@ -43,6 +43,21 @@
             margin-bottom: 1rem;
         }
 
+        .nav-btn {
+            display: inline-block;
+            color: white;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            line-height: normal;
+        }
+
         .favorite-card {
             background: white;
             border-radius: 8px;
@@ -103,15 +118,143 @@
             margin: 10px 0;
             font-size: 14px;
         }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        .header-navigation {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Адаптивность для favorite_list */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                max-width: 100%;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header-navigation {
+                justify-content: flex-start;
+            }
+
+            .favorite-card {
+                padding: 1.25rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            /* Улучшаем кнопки действий в карточках */
+            .favorite-card > div:last-child {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .favorite-btn {
+                display: block;
+                text-align: center;
+                margin: 2px 0;
+            }
+
+            form[style*="display: inline"] {
+                width: 100%;
+            }
+
+            select[name="priority"] {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .waypoint-meta {
+                padding: 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .favorite-card {
+                padding: 1rem;
+            }
+
+            .section-title h2 {
+                font-size: 1.1rem;
+            }
+
+            .nav-btn {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 1.25rem;
+            }
+
+            .priority-stars {
+                font-size: 16px;
+            }
+
+            .favorite-card h3 {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <a href="{% url 'home' %}" class="back-link">
-            ← Назад к маршрутам
-        </a>
-        <h1>⭐ Мои избранные точки</h1>
-        <p>Здесь собраны все точки маршрутов, которые вы добавили в избранное</p>
+        <div style="margin-bottom: 1rem;">
+            <a href="{% url 'routes:route_list' %}" class="back-link">
+                ← Назад к маршрутам
+            </a>
+        </div>
+
+        <div class="header-content">
+            <div class="header-text">
+                <h1>⭐ Мои избранные точки</h1>
+                <p>Здесь собраны все точки маршрутов, которые вы добавили в избранное</p>
+            </div>
+
+            <div class="header-navigation">
+                <a href="{% url 'users:personal_route_list' %}" class="nav-btn">🗺️ Персональные</a>
+                <a href="{% url 'users:visitnote_list' %}" class="nav-btn">📝 Заметки</a>
+                <a href="{% url 'routes:route_list' %}" class="nav-btn">🔍 Все маршруты</a>
+
+                {% if user_can_create_routes %}
+                    <a href="{% url 'routes:user_routes' %}" class="nav-btn">📋 Маршруты гида</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     {% if messages %}
@@ -202,7 +345,7 @@
         <div class="empty-state">
             <h2>😔 У вас пока нет избранных точек</h2>
             <p>Найдите интересные маршруты и добавляйте точки в избранное!</p>
-            <a href="{% url 'home' %}"
+            <a href="{% url 'routes:route_list' %}"
                class="favorite-btn"
                style="background: var(--aurora); color: white; padding: 12px 24px;">
                 🗺️ Найти маршруты

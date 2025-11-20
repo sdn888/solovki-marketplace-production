@@ -476,6 +476,11 @@
                         <a href="{% url 'routes:route_detail' route.pk %}" class="btn" style="flex: 2;">
                             Просмотреть
                         </a>
+
+                        <a href="{% url 'routes:manage_waypoints' route.pk %}" class="btn" style="flex: 1; background: #9B59B6; color: white;">
+                            📍
+                        </a>
+
                         <a href="{% url 'routes:route_update' route.pk %}" class="btn" style="flex: 1; background: #3498DB;">
                             ✏️
                         </a>

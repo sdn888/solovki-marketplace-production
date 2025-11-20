@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Удаление точки - Solovki</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+            --sunset: #E74C3C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .confirmation-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .warning-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background: var(--sunset);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'routes:manage_waypoints' waypoint.route.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к управлению точками
+        </a>
+        <h1>🗑️ Удаление точки</h1>
+    </div>
+
+    <div class="confirmation-card">
+        <div class="warning-icon">⚠️</div>
+        <h2>Вы уверены, что хотите удалить точку?</h2>
+        <h3>"{{ waypoint.name }}"</h3>
+        <p><strong>Маршрут:</strong> {{ waypoint.route.title }}</p>
+
+        <p style="margin: 1.5rem 0; color: #666;">
+            Это действие нельзя отменить. Все данные точки будут безвозвратно удалены.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">✅ Да, удалить точку</button>
+            <a href="{% url 'routes:manage_waypoints' waypoint.route.pk %}" class="btn btn-secondary">❌ Отмена</a>
+        </form>
+    </div>
+</body>
+</html>

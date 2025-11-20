@@ -517,6 +517,149 @@
         .font-small { font-size: 16px; }
         .font-medium { font-size: 18px; }
         .font-large { font-size: 20px; }
+
+        /* Адаптивность для route_detail */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .route-meta-header {
+                justify-content: flex-start;
+                gap: 1rem;
+            }
+
+            .meta-card {
+                min-width: 120px;
+                padding: 0.75rem;
+            }
+
+            .meta-value {
+                font-size: 1.1rem;
+            }
+
+            .map-container {
+                height: 300px;
+            }
+
+            /* Улучшаем навигацию */
+            .controls {
+                position: static;
+                margin-bottom: 1rem;
+                flex-direction: row;
+                justify-content: center;
+                width: auto;
+            }
+
+            .control-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .control-btn {
+                font-size: 10px;
+                padding: 5px 6px;
+                min-width: 28px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .route-meta-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .meta-card {
+                min-width: 100%;
+                text-align: center;
+            }
+
+            .waypoint-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .waypoint-type {
+                align-self: flex-start;
+            }
+
+            .image-gallery {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .gallery-image {
+                height: 100px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card {
+                padding: 1.25rem;
+            }
+
+            .waypoint {
+                padding: 1.25rem;
+            }
+
+            /* Улучшаем кнопки действий */
+            .favorite-buttons .favorite-btn,
+            .personal-route-buttons .favorite-btn {
+                display: block;
+                width: 100%;
+                margin: 5px 0;
+                text-align: center;
+            }
+
+            .favorite-buttons,
+            .personal-route-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 0 10px;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 1.25rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .waypoint {
+                padding: 1rem;
+            }
+
+            .image-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-image {
+                height: 120px;
+            }
+        }
     </style>
 </head>
 <body class="font-medium">
@@ -573,6 +716,12 @@
                                 {% if user_can_create_routes %}
                                     <a href="{% url 'routes:route_create' %}" class="nav-btn" style="background: var(--aurora);">🗺️ Создать</a>
                                     <a href="{% url 'routes:user_routes' %}" class="nav-btn">📋 Маршруты гида</a>
+                                {% endif %}
+
+                                {% if user.is_authenticated and user == route.author or user_is_admin %}
+                                    <a href="{% url 'routes:manage_waypoints' route.pk %}" class="nav-btn" style="background: #9B59B6; color: white;">
+                                        📍 Управление точками
+                                    </a>
                                 {% endif %}
 
                                 {% if user_is_admin or user_is_expert_guide %}
