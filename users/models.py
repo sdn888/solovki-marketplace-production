@@ -52,13 +52,13 @@ class CustomUser(AbstractUser):
     )
 
     # Профиль гида - пока просто связь, модель создадим ниже
-    guide_profile = models.OneToOneField(
-        'GuideProfile',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='user'
-    )
+    # guide_profile = models.OneToOneField(
+    #     'GuideProfile',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='user'
+    # )
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
@@ -260,7 +260,7 @@ class GuideProfile(models.Model):
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name='guide_profile_rel'
+        related_name='guide_profile'
     )
 
     bio = models.TextField(verbose_name="Биография", blank=True)
