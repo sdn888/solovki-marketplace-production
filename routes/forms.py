@@ -21,7 +21,7 @@ class WaypointForm(forms.ModelForm):
 
     class Meta:
         model = Waypoint
-        fields = '__all__'
+        exclude = ['route', 'order']  # ← ИЗМЕНЯЕМ с fields = '__all__'
         widgets = {
             'short_description': forms.Textarea(attrs={
                 'rows': 3,

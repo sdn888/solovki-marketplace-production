@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Очередь модерации - Solovki</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-approve {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'routes:route_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к маршрутам
+        </a>
+        <h1>⚡ Очередь модерации</h1>
+        <p>Маршруты, ожидающие проверки</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if routes %}
+        {% for route in routes %}
+        <div class="route-card">
+            <h3>{{ route.title }}</h3>
+            <p><strong>Автор:</strong> {{ route.author.username }}</p>
+            <p><strong>Создан:</strong> {{ route.created_at|date:"d.m.Y H:i" }}</p>
+            <p>{{ route.description|truncatewords:30 }}</p>
+
+            <div>
+                <a href="{% url 'routes:route_detail' route.pk %}" class="btn" style="background: #3498DB; color: white;">
+                    👁️ Просмотреть
+                </a>
+                <a href="{% url 'routes:moderate_route' route.pk 'approve' %}" class="btn btn-approve">
+                    ✅ Одобрить
+                </a>
+                <a href="{% url 'routes:moderate_route' route.pk 'reject' %}" class="btn btn-reject">
+                    ❌ Отклонить
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h2>🎉 Нет маршрутов для модерации</h2>
+            <p>Все маршруты проверены и готовы к публикации!</p>
+        </div>
+    {% endif %}
+</body>
+</html>

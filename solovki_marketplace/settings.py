@@ -41,9 +41,9 @@ INSTALLED_APPS = [
     # Приложения проекта
     'routes',
     'users',
-    'orders',
-    'operators',
-    'analytics',
+    # 'orders',
+    # 'operators',
+    # 'analytics',
 ]
 
 MIDDLEWARE = [

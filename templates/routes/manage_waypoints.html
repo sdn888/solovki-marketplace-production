@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление точками маршрута - {{ route.title }}</title>
+
+    <!-- ДОБАВЛЯЕМ CSRF ТОКЕН -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root {
@@ -198,6 +202,42 @@
     {% endif %}
 
     <script>
+        // Функция для получения CSRF токена - ИСПРАВЛЕННАЯ ВЕРСИЯ
+        function getCSRFToken() {
+            // Способ 1: Ищем в cookies
+            let cookieValue = null;
+            const name = 'csrftoken';
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+
+            // Способ 2: Ищем в meta тегах
+            if (!cookieValue) {
+                const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+                if (csrfTokenMeta) {
+                    cookieValue = csrfTokenMeta.getAttribute('content');
+                }
+            }
+
+            // Способ 3: Ищем в скрытом input
+            if (!cookieValue) {
+                const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                if (csrfInput) {
+                    cookieValue = csrfInput.value;
+                }
+            }
+
+            console.log("CSRF Token:", cookieValue ? "Found" : "Not found");
+            return cookieValue;
+        }
+
         // Инициализация Drag & Drop
         document.addEventListener('DOMContentLoaded', function() {
             const waypointsList = document.getElementById('waypoints-list');
@@ -213,6 +253,9 @@
                         updateWaypointsOrder();
                     }
                 });
+                console.log('Drag&Drop инициализирован');
+            } else {
+                console.error('SortableJS не загружен или waypoints-list не найден');
             }
         });
 
@@ -243,17 +286,28 @@
                 }
             });
 
-            // Отправляем данные на сервер
+            console.log("Отправка данных порядка:", orderData);
+
+            // Отправляем данные на сервер - ИСПРАВЛЕННЫЙ ЗАПРОС
             fetch(`/routes/{{ route.id }}/update-waypoints-order/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
+                    'X-CSRFToken': getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ order: orderData })
+                body: JSON.stringify({ order: orderData }),
+                credentials: 'same-origin' // Важно для передачи cookies
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log("Статус ответа:", response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Ответ сервера:", data);
                 if (data.status === 'success') {
                     showSaveMessage();
                 } else {
@@ -262,23 +316,19 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Ошибка при сохранении порядка');
+                alert('Ошибка при сохранении порядка: ' + error.message);
             });
-        }
-
-        // Функция для получения CSRF токена
-        function getCSRFToken() {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-            return csrfToken ? csrfToken.value : '';
         }
 
         // Функция показа сообщения о сохранении
         function showSaveMessage() {
             const message = document.getElementById('save-message');
-            message.style.display = 'block';
-            setTimeout(() => {
-                message.style.display = 'none';
-            }, 3000);
+            if (message) {
+                message.style.display = 'block';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 3000);
+            }
         }
     </script>
 </body>
