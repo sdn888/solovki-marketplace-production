@@ -48,6 +48,66 @@ class Route(models.Model):
     end_lat = models.FloatField(verbose_name="Широта финиша", null=True, blank=True)
     end_lon = models.FloatField(verbose_name="Долгота финиша", null=True, blank=True)
 
+    # НОВЫЕ поля для системы ролей (добавляем после существующих):
+    author = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='authored_routes',
+        verbose_name="Автор",
+        null=True,  # Временно nullable для плавного перехода
+        blank=True
+    )
+
+    STATUS_CHOICES = [
+        ('draft', 'Черновик'),
+        ('pending', 'На модерации'),
+        ('published', 'Опубликован'),
+        ('rejected', 'Отклонен'),
+        ('archived', 'В архиве'),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='draft',
+        verbose_name="Статус"
+    )
+
+    ACCESS_LEVEL_CHOICES = [
+        ('public', 'Публичный'),
+        ('premium', 'Только для премиум'),
+        ('private', 'Приватный'),
+    ]
+
+    access_level = models.CharField(
+        max_length=20,
+        choices=ACCESS_LEVEL_CHOICES,
+        default='public',
+        verbose_name="Уровень доступа"
+    )
+
+    # Монетизация
+    is_premium = models.BooleanField(default=False, verbose_name="Премиум маршрут")
+
+    # Статистика
+    views_count = models.IntegerField(default=0, verbose_name="Просмотры")
+    likes_count = models.IntegerField(default=0, verbose_name="Лайки")
+    shares_count = models.IntegerField(default=0, verbose_name="Поделились")
+
+    # Модерация
+    moderated_by = models.ForeignKey(
+        'users.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='moderated_routes',
+        verbose_name="Модератор"
+    )
+    moderation_notes = models.TextField(
+        blank=True,
+        verbose_name="Заметки модератора"
+    )
+
     def get_gallery_images(self):
         """
         Возвращает первые 4 изображения маршрута или точек маршрута
