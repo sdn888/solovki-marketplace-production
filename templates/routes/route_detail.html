@@ -546,6 +546,20 @@
                     <h1>{{ route.title }}</h1>
                     <p style="color: var(--stone); margin-bottom: 1rem;">{{ route.description }}</p>
 
+                    <!-- ДОБАВЛЯЕМ КНОПКИ УПРАВЛЕНИЯ МАРШРУТОМ -->
+                    {% if user.is_authenticated and user == route.author or user_is_admin %}
+                    <div style="margin-top: 1rem;">
+                        <a href="{% url 'routes:route_update' route.pk %}"
+                           style="color: white; background: #3498DB; padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
+                            ✏️ Редактировать
+                        </a>
+                        <a href="{% url 'routes:route_delete' route.pk %}"
+                           style="color: white; background: #E74C3C; padding: 8px 16px; border-radius: 4px; text-decoration: none;">
+                            🗑️ Удалить
+                        </a>
+                    </div>
+                    {% endif %}
+
                     <!-- ДОБАВЛЯЕМ НАВИГАЦИЮ ЗДЕСЬ -->
                     <div style="margin-top: 1rem;">
                         {% if user.is_authenticated %}
@@ -561,6 +575,25 @@
                                style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none;">
                                 📝 Мои заметки
                             </a>
+
+                            <!-- НОВЫЕ КНОПКИ ДЛЯ ГИДОВ И МОДЕРАТОРОВ -->
+                            {% if user_can_create_routes %}
+                                <a href="{% url 'routes:route_create' %}"
+                                   style="color: white; background: var(--aurora); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
+                                    🗺️ Создать маршрут
+                                </a>
+                                <a href="{% url 'routes:user_routes' %}"
+                                   style="color: white; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 4px; text-decoration: none; margin-right: 10px;">
+                                    📋 Мои маршруты
+                                </a>
+                            {% endif %}
+
+                            {% if user_is_admin or user_is_expert_guide %}
+                                <a href="{% url 'routes:moderation_queue' %}"
+                                   style="color: white; background: #E74C3C; padding: 8px 16px; border-radius: 4px; text-decoration: none;">
+                                    ⚡ Модерация
+                                </a>
+                            {% endif %}
 
                         {% else %}
                             <a href="{% url 'admin:login' %}?next={{ request.path }}"
