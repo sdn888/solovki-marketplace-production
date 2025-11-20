@@ -80,8 +80,71 @@ class RouteForm(forms.ModelForm):
 
     class Meta:
         model = Route
-        fields = '__all__'
+        # ЗАМЕНЯЕМ fields = '__all__' на явный список, исключая служебные поля
+        fields = [
+            'title', 'description', 'theme', 'transport_type',
+            'duration_hours', 'price', 'need_food_supply',
+            'max_participants', 'is_active',
+            'start_lat', 'start_lon', 'end_lat', 'end_lon',
+            # НОВЫЕ ПОЛЯ для системы ролей:
+            'status', 'access_level', 'is_premium'
+        ]
+        widgets = {
+            # СУЩЕСТВУЮЩИЕ виджеты остаются
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'theme': forms.Select(attrs={'class': 'form-control'}),
+            'transport_type': forms.Select(attrs={'class': 'form-control'}),
+            'duration_hours': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control'}),
+            'max_participants': forms.NumberInput(attrs={'class': 'form-control'}),
+            # НОВЫЕ виджеты для дополнительных полей
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'access_level': forms.Select(attrs={'class': 'form-control'}),
+            'is_premium': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'need_food_supply': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
         help_texts = {
             'start_lat': 'Широта начала маршрута (отель "Морюшко")',
             'start_lon': 'Долгота начала маршрута',
+            # НОВЫЕ подсказки
+            'status': 'Статус видимости маршрута',
+            'access_level': 'Уровень доступа к маршруту',
+            'is_premium': 'Премиум маршруты доступны только подписчикам',
         }
+        labels = {
+            'is_premium': 'Премиум маршрут',
+            'access_level': 'Уровень доступа',
+            'status': 'Статус публикации',
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Извлекаем пользователя из kwargs если передан
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # Настраиваем начальные значения для новых полей
+        if not self.instance.pk:  # Если это создание нового маршрута
+            self.fields['status'].initial = 'draft'
+            self.fields['access_level'].initial = 'public'
+            self.fields['is_premium'].initial = False
+
+        # Ограничиваем выбор статуса для обычных пользователей
+        if self.user and self.user.role not in ['admin', 'expert_guide']:
+            # Обычные гиды могут выбирать только черновик или отправлять на модерацию
+            self.fields['status'].choices = [
+                ('draft', 'Черновик'),
+                ('pending', 'Отправить на модерацию'),
+            ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_premium = cleaned_data.get('is_premium')
+        access_level = cleaned_data.get('access_level')
+
+        # Проверяем, что премиум маршруты имеют соответствующий уровень доступа
+        if is_premium and access_level != 'premium':
+            self.add_error('access_level', 'Премиум маршруты должны иметь уровень доступа "Только для премиум"')
+
+        return cleaned_data
