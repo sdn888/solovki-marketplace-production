@@ -1,29 +1,27 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, FavoriteWaypoint, VisitNote, PersonalRoute, PersonalRoutePoint
+from .models import CustomUser, FavoriteWaypoint, VisitNote, PersonalRoute, PersonalRoutePoint, VisitNoteImage
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'role', 'first_name', 'last_name', 'is_staff')
-    list_filter = ('role', 'is_staff', 'is_superuser')
+    list_filter = ('role', 'is_staff', 'is_superuser', 'subscription_type')
 
+    # Группируем поля при редактировании
     fieldsets = UserAdmin.fieldsets + (
         ('Дополнительная информация', {
-            'fields': ('role', 'phone', 'avatar', 'bio')
+            'fields': ('role', 'phone', 'avatar', 'bio', 'subscription_type', 'subscription_expires')
         }),
     )
 
+    # Группируем поля при добавлении нового пользователя
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Дополнительная информация', {
-            'fields': ('role', 'phone', 'avatar', 'bio')
+            'fields': ('role', 'phone', 'avatar', 'bio', 'subscription_type', 'subscription_expires')
         }),
     )
 
-from django.contrib import admin
-from .models import CustomUser, FavoriteWaypoint, VisitNote
-
-# ... существующий код CustomUserAdmin ...
 
 @admin.register(FavoriteWaypoint)
 class FavoriteWaypointAdmin(admin.ModelAdmin):
@@ -32,6 +30,7 @@ class FavoriteWaypointAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'waypoint__name', 'personal_notes']
     ordering = ['-created_at']
 
+
 @admin.register(VisitNote)
 class VisitNoteAdmin(admin.ModelAdmin):
     list_display = ['user', 'waypoint', 'visit_date', 'rating', 'created_at']
@@ -39,7 +38,14 @@ class VisitNoteAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'waypoint__name', 'notes']
     ordering = ['-visit_date']
 
-# новые модели для персональных маршрутов
+
+@admin.register(VisitNoteImage)
+class VisitNoteImageAdmin(admin.ModelAdmin):
+    list_display = ['visit_note', 'caption', 'order', 'created_at']
+    list_filter = ['created_at']
+    ordering = ['visit_note', 'order']
+
+
 @admin.register(PersonalRoute)
 class PersonalRouteAdmin(admin.ModelAdmin):
     list_display = ['title', 'user', 'color', 'is_public', 'created_at']
@@ -47,10 +53,10 @@ class PersonalRouteAdmin(admin.ModelAdmin):
     search_fields = ['title', 'description', 'user__username']
     ordering = ['-created_at']
 
+
 @admin.register(PersonalRoutePoint)
 class PersonalRoutePointAdmin(admin.ModelAdmin):
     list_display = ['route', 'waypoint', 'order']
     list_filter = ['route', 'route__user']
     search_fields = ['route__title', 'waypoint__name']
     ordering = ['route', 'order']
-

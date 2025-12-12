@@ -93,6 +93,15 @@
             margin-top: 0;
             color: var(--sea-dark);
         }
+
+        /* Стили для скрытых полей */
+        .hidden-field {
+            display: none;
+        }
+
+        .error-input {
+            border-color: #dc3545 !important;
+        }
     </style>
 </head>
 <body>
@@ -102,17 +111,20 @@
         </a>
         <h1>{% if form.instance.pk %}✏️ Редактирование точки{% else %}📍 Создание новой точки{% endif %}</h1>
         <p>Маршрут: <strong>{{ route.title }}</strong></p>
+        {% if not form.instance.pk %}
+        <p><small>⚠️ Порядковый номер точки будет установлен автоматически (в конец маршрута)</small></p>
+        {% endif %}
     </div>
 
     <div class="form-card">
-        <!-- ДОБАВЛЯЕМ ОТЛАДОЧНУЮ ИНФОРМАЦИЮ -->
+        <!-- ОТЛАДОЧНАЯ ИНФОРМАЦИЯ -->
         {% if form.errors %}
         <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
             <h3 style="margin-top: 0;">❌ Ошибки в форме:</h3>
             <ul style="margin-bottom: 0;">
                 {% for field in form %}
                     {% for error in field.errors %}
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        <li><strong>{{ field.label|default:field.name }}:</strong> {{ error }}</li>
                     {% endfor %}
                 {% endfor %}
                 {% for error in form.non_field_errors %}
@@ -142,6 +154,11 @@
                 <div class="form-group">
                     <label for="{{ form.waypoint_type.id_for_label }}">Тип точки *</label>
                     {{ form.waypoint_type }}
+                </div>
+
+                <!-- СКРЫТОЕ ПОЛЕ ORDER -->
+                <div class="hidden-field">
+                    {{ form.order }}
                 </div>
 
                 <div class="form-group">
@@ -272,7 +289,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             {% for field in form %}
                 {% if field.errors %}
-                    document.getElementById('{{ field.id_for_label }}').classList.add('error-input');
+                    var fieldElement = document.getElementById('{{ field.id_for_label }}');
+                    if (fieldElement) {
+                        fieldElement.classList.add('error-input');
+                    }
                 {% endif %}
             {% endfor %}
         });

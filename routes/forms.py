@@ -21,35 +21,50 @@ class WaypointForm(forms.ModelForm):
 
     class Meta:
         model = Waypoint
-        exclude = ['route', 'order']  # ← ИЗМЕНЯЕМ с fields = '__all__'
+        # ИЗМЕНЯЕМ: убираем exclude, явно указываем поля, включая order
+        fields = [
+            'order', 'name', 'waypoint_type', 'latitude', 'longitude', 'altitude',
+            'short_description', 'detailed_description', 'history_info', 'architecture_info',
+            'visit_notes', 'path_description', 'best_time_to_visit', 'difficulty',
+            'estimated_stay_minutes', 'has_food', 'has_toilets', 'has_parking',
+            'is_wheelchair_accessible', 'is_optional'
+        ]
         widgets = {
+            'order': forms.NumberInput(attrs={'class': 'form-control', 'step': 1}),
             'short_description': forms.Textarea(attrs={
                 'rows': 3,
-                'placeholder': 'Краткое описание, которое будет показываться в списках и карточках'
+                'placeholder': 'Краткое описание, которое будет показываться в списках и карточках',
+                'class': 'form-control'
             }),
             'detailed_description': forms.Textarea(attrs={
                 'rows': 6,
-                'placeholder': 'Полное и подробное описание достопримечательности'
+                'placeholder': 'Полное и подробное описание достопримечательности',
+                'class': 'form-control'
             }),
             'history_info': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': 'Исторические факты, даты, значимые события'
+                'placeholder': 'Исторические факты, даты, значимые события',
+                'class': 'form-control'
             }),
             'architecture_info': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': 'Архитектурные особенности, стиль, материалы'
+                'placeholder': 'Архитектурные особенности, стиль, материалы',
+                'class': 'form-control'
             }),
             'visit_notes': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': 'Особенности посещения, рекомендации, что учесть'
+                'placeholder': 'Особенности посещения, рекомендации, что учесть',
+                'class': 'form-control'
             }),
             'path_description': forms.Textarea(attrs={
                 'rows': 4,
-                'placeholder': 'Как добраться, описание пути, ориентиры'
+                'placeholder': 'Как добраться, описание пути, ориентиры',
+                'class': 'form-control'
             }),
             'best_time_to_visit': forms.Textarea(attrs={
                 'rows': 3,
-                'placeholder': 'Лучшее время года, время суток, погодные условия'
+                'placeholder': 'Лучшее время года, время суток, погодные условия',
+                'class': 'form-control'
             }),
         }
         help_texts = {
@@ -57,6 +72,7 @@ class WaypointForm(forms.ModelForm):
             'detailed_description': 'Полное описание для страницы точки маршрута',
             'latitude': 'Широта в формате 64.0245',
             'longitude': 'Долгота в формате 35.7105',
+            'order': 'Порядковый номер точки в маршруте',
         }
 
 

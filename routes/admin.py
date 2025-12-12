@@ -35,10 +35,14 @@ class WaypointInline(admin.TabularInline):
 @admin.register(Route)
 class RouteAdmin(admin.ModelAdmin):
     form = RouteForm
-    list_display = ['title', 'theme', 'transport_type', 'duration_hours', 'price', 'is_active']
-    list_filter = ['theme', 'transport_type', 'is_active']
+    list_display = ['title', 'theme', 'transport_type', 'duration_hours', 'price', 'is_active', 'status', 'author']
+    list_filter = ['theme', 'transport_type', 'is_active', 'status', 'author']
     search_fields = ['title', 'description']
-    inlines = [RouteImageInline, WaypointInline, RouteTipInline]  # ДОБАВЛЕН RouteImageInline
+    inlines = [RouteImageInline, WaypointInline, RouteTipInline]
+
+    # ДОБАВЛЯЕМ ЭТИ ДЕЙСТВИЯ
+    actions = ['make_published', 'make_draft', 'make_pending', 'make_archived', 'make_rejected']
+
     fieldsets = (
         ('Основная информация', {
             'fields': ('title', 'description', 'theme', 'transport_type')
@@ -49,10 +53,41 @@ class RouteAdmin(admin.ModelAdmin):
         ('Геоданные', {
             'fields': ('start_lat', 'start_lon', 'end_lat', 'end_lon'),
         }),
-        ('Статус', {
-            'fields': ('is_active',)
+        ('Статус и доступ', {
+            'fields': ('is_active', 'status', 'access_level', 'is_premium', 'author')
         }),
     )
+
+    # ДОБАВЛЯЕМ МЕТОДЫ ДЛЯ ДЕЙСТВИЙ
+    def make_published(self, request, queryset):
+        updated = queryset.update(status='published')
+        self.message_user(request, f'{updated} маршрут(ов) опубликовано')
+
+    make_published.short_description = "Опубликовать выбранные маршруты"
+
+    def make_draft(self, request, queryset):
+        updated = queryset.update(status='draft')
+        self.message_user(request, f'{updated} маршрут(ов) переведено в черновик')
+
+    make_draft.short_description = "Перевести в черновик"
+
+    def make_pending(self, request, queryset):
+        updated = queryset.update(status='pending')
+        self.message_user(request, f'{updated} маршрут(ов) отправлено на модерацию')
+
+    make_pending.short_description = "Отправить на модерацию"
+
+    def make_archived(self, request, queryset):
+        updated = queryset.update(status='archived')
+        self.message_user(request, f'{updated} маршрут(ов) перемещено в архив')
+
+    make_archived.short_description = "Переместить в архив"
+
+    def make_rejected(self, request, queryset):
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'{updated} маршрут(ов) отклонено')
+
+    make_rejected.short_description = "Отклонить маршруты"
 
 
 @admin.register(Waypoint)

@@ -6,13 +6,13 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.http import JsonResponse
-from django.db import transaction, models  # ← ДОБАВЛЯЕМ models здесь!
-from django.db import transaction
+from django.db import transaction, models
 import json
 from django.utils.decorators import method_decorator
 
 from .models import Route, Waypoint
-from .forms import RouteForm, WaypointForm
+from .forms import RouteForm
+from .forms_guides import GuideWaypointForm  # ИМПОРТИРУЕМ НОВУЮ ФОРМУ
 from users.decorators import guide_required
 from users.utils import can_edit_route, can_moderate_route
 
@@ -156,7 +156,7 @@ def manage_waypoints(request, pk):
 @method_decorator([login_required], name='dispatch')
 class WaypointCreateView(CreateView):
     model = Waypoint
-    form_class = WaypointForm
+    form_class = GuideWaypointForm
     template_name = 'routes/waypoint_form.html'
 
     def get_route(self):
@@ -167,22 +167,31 @@ class WaypointCreateView(CreateView):
         context['route'] = self.get_route()
         return context
 
+    # ПЕРЕОПРЕДЕЛЯЕМ get_form, а не get_form_kwargs
+    def get_form(self, form_class=None):
+        """Создаем форму с передачей route"""
+        form = super().get_form(form_class)
+        route = self.get_route()
+
+        # Передаем route в форму через атрибут
+        if hasattr(form, 'route'):
+            form.route = route
+
+        # Устанавливаем начальное значение для order
+        if route and not form.instance.pk:
+            max_order = route.waypoints.aggregate(models.Max('order'))['order__max']
+            form.fields['order'].initial = (max_order or 0) + 1
+
+        return form
+
     def form_valid(self, form):
         route = self.get_route()
         form.instance.route = route
 
-        # УЛУЧШАЕМ ЛОГИКУ УСТАНОВКИ ПОРЯДКА
-        # Получаем максимальный порядок среди существующих точек
-        max_order = route.waypoints.aggregate(models.Max('order'))['order__max']
-        # Устанавливаем следующий порядковый номер
-        form.instance.order = (max_order or 0) + 1
-
-        # ДОБАВЛЯЕМ ОТЛАДОЧНУЮ ИНФОРМАЦИЮ
-        print("=== ДЕБАГ СОЗДАНИЯ ТОЧКИ ===")
-        print(f"Маршрут: {route.title} (ID: {route.id})")
-        print(f"Текущий максимальный порядок: {max_order}")
-        print(f"Новый порядок: {form.instance.order}")
-        print(f"Данные формы: {form.cleaned_data}")
+        # Если order не указан, устанавливаем автоматически
+        if not form.cleaned_data.get('order'):
+            max_order = route.waypoints.aggregate(models.Max('order'))['order__max']
+            form.instance.order = (max_order or 0) + 1
 
         try:
             response = super().form_valid(form)
@@ -194,28 +203,17 @@ class WaypointCreateView(CreateView):
             messages.error(self.request, f'❌ Ошибка при создании точки: {e}')
             return self.form_invalid(form)
 
-    def form_invalid(self, form):
-        # ДОБАВЛЯЕМ ОТЛАДОЧНУЮ ИНФОРМАЦИЮ ПРИ ОШИБКАХ
-        print("=== ДЕБАГ ОШИБКИ ФОРМЫ ===")
-        print(f"Ошибки формы: {form.errors}")
-        print(f"Данные формы: {form.data}")
-        messages.error(self.request, '❌ Проверьте правильность заполнения формы')
-        return super().form_invalid(form)
-
-
-    def get_success_url(self):
-        return reverse_lazy('routes:manage_waypoints', kwargs={'pk': self.kwargs['route_id']})
+    # УБИРАЕМ метод get_form_kwargs, т.к. теперь используем get_form
 
 
 # Редактирование точки маршрута
 @method_decorator([login_required], name='dispatch')
 class WaypointUpdateView(UpdateView):
     model = Waypoint
-    form_class = WaypointForm
+    form_class = GuideWaypointForm
     template_name = 'routes/waypoint_form.html'
 
     def get_queryset(self):
-        # Администраторы могут редактировать любые точки, авторы - только своих маршрутов
         if self.request.user.role == 'admin':
             return Waypoint.objects.all()
         return Waypoint.objects.filter(route__author=self.request.user)
@@ -225,12 +223,17 @@ class WaypointUpdateView(UpdateView):
         context['route'] = self.object.route
         return context
 
-    def form_valid(self, form):
-        # ДОБАВЛЯЕМ ОТЛАДОЧНУЮ ИНФОРМАЦИЮ ДЛЯ РЕДАКТИРОВАНИЯ
-        print("=== ДЕБАГ РЕДАКТИРОВАНИЯ ТОЧКИ ===")
-        print(f"Точка: {self.object.name} (ID: {self.object.id})")
-        print(f"Данные формы: {form.cleaned_data}")
+    def get_form(self, form_class=None):
+        """Создаем форму с передачей route"""
+        form = super().get_form(form_class)
 
+        # Передаем route в форму через атрибут
+        if hasattr(form, 'route'):
+            form.route = self.object.route
+
+        return form
+
+    def form_valid(self, form):
         try:
             response = super().form_valid(form)
             print("✅ Точка успешно обновлена!")
@@ -241,14 +244,7 @@ class WaypointUpdateView(UpdateView):
             messages.error(self.request, f'❌ Ошибка при обновлении точки: {e}')
             return self.form_invalid(form)
 
-    def form_invalid(self, form):
-        print("=== ДЕБАГ ОШИБКИ ФОРМЫ (РЕДАКТИРОВАНИЕ) ===")
-        print(f"Ошибки формы: {form.errors}")
-        messages.error(self.request, '❌ Проверьте правильность заполнения формы')
-        return super().form_invalid(form)
-
-    def get_success_url(self):
-        return reverse_lazy('routes:manage_waypoints', kwargs={'pk': self.object.route.pk})
+    # УБИРАЕМ метод get_form_kwargs
 
 
 # Удаление точки маршрута
@@ -290,7 +286,6 @@ def update_waypoints_order(request, route_id):
             if not can_edit_route(request.user, route):
                 return JsonResponse({'status': 'error', 'message': 'Нет прав доступа'}, status=403)
 
-            # ДОБАВЛЯЕМ ОТЛАДОЧНУЮ ИНФОРМАЦИЮ
             print("=== ДЕБАГ ОБНОВЛЕНИЯ ПОРЯДКА ===")
             print(f"Пользователь: {request.user.username}")
             print(f"Маршрут: {route.title} (ID: {route.id})")
@@ -327,6 +322,7 @@ def update_waypoints_order(request, route_id):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
     return JsonResponse({'status': 'error', 'message': 'Метод не разрешен'}, status=405)
+
 
 @ensure_csrf_cookie
 @login_required
