@@ -24,6 +24,9 @@
     <form method="post" action="">
         {% csrf_token %}
 
+        <!-- Важно: скрытое поле с action -->
+        <input type="hidden" name="action" value="{{ action_name }}" />
+
         <div style="background: white; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             {{ form.as_p }}
         </div>
@@ -36,6 +39,11 @@
                ❌ Отмена
             </a>
         </div>
+
+        <!-- Скрытые поля для выбранных объектов -->
+        {% for waypoint in waypoints %}
+        <input type="hidden" name="_selected_action" value="{{ waypoint.pk }}" />
+        {% endfor %}
     </form>
 </div>
 

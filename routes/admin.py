@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Route, Waypoint, WaypointImage, RouteTip, RouteImage
-from .forms import RouteForm, WaypointForm
-from django.db import models
+from django.contrib import messages
 from django import forms
 from django.shortcuts import render
-from django.contrib import messages
+from django.db import models
+from .models import Route, Waypoint, WaypointImage, RouteTip, RouteImage
+from .forms import RouteForm, WaypointForm
 
 
 class RouteImageInline(admin.TabularInline):
@@ -109,7 +109,6 @@ class WaypointAdmin(admin.ModelAdmin):
 
     def copy_to_route_action(self, request, queryset):
         """Копировать выбранные точки в другой маршрут"""
-        from django.http import HttpResponseRedirect
 
         class CopyRouteForm(forms.Form):
             target_route = forms.ModelChoiceField(
@@ -123,6 +122,7 @@ class WaypointAdmin(admin.ModelAdmin):
                 required=False
             )
 
+        # Если форма отправлена
         if 'apply' in request.POST:
             form = CopyRouteForm(request.POST)
             if form.is_valid():
@@ -174,12 +174,17 @@ class WaypointAdmin(admin.ModelAdmin):
 
                     copied_count += 1
 
-                self.message_user(request, f'✅ Скопировано {copied_count} точек в маршрут "{target_route.title}"')
+                messages.success(request, f'✅ Скопировано {copied_count} точек в маршрут "{target_route.title}"')
+                # Возвращаем None, чтобы админка сделала редирект на страницу списка
                 return None
+            else:
+                # Если форма не валидна, покажем ошибки
+                messages.error(request, '❌ Форма содержит ошибки. Проверьте введенные данные.')
 
         else:
             form = CopyRouteForm()
 
+        # Рендерим шаблон с формой
         return render(request, 'admin/copy_waypoints.html', {
             'waypoints': queryset,
             'form': form,
