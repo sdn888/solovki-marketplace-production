@@ -19,6 +19,7 @@
             --sunset: #E74C3C;
             --text-dark: #2C3E50;
             --text-light: #7F8C8D;
+            --copy-blue: #3498DB;
         }
 
         body {
@@ -101,8 +102,18 @@
             color: white;
         }
 
+        .btn-copy {
+            background: var(--copy-blue);
+            color: white;
+        }
+
         .btn-danger {
             background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
             color: white;
         }
 
@@ -121,6 +132,58 @@
             text-align: center;
         }
 
+        /* Модальное окно для копирования */
+        .copy-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .copy-modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .routes-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+        }
+
+        .route-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .route-item:last-child {
+            border-bottom: none;
+        }
+
+        .copy-options {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 15px;
@@ -134,6 +197,12 @@
                 flex-direction: column;
                 gap: 5px;
             }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+                margin: 3px;
+            }
         }
     </style>
 </head>
@@ -144,12 +213,13 @@
         </a>
         <h1>📍 Управление точками маршрута</h1>
         <p>Маршрут: <strong>{{ route.title }}</strong></p>
+        <p><small>Перетащите точки для изменения порядка. Порядок сохраняется автоматически.</small></p>
 
         <div style="margin-top: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
             <a href="{% url 'routes:create_waypoint' route.id %}" class="btn btn-primary">
                 ➕ Добавить точку
             </a>
-            <a href="{% url 'routes:route_detail' route.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            <a href="{% url 'routes:route_detail' route.pk %}" class="btn btn-secondary">
                 👁️ Просмотреть маршрут
             </a>
         </div>
@@ -167,6 +237,32 @@
         ✅ Порядок точек сохранен!
     </div>
 
+    <!-- Модальное окно для выбора маршрута для копирования -->
+    <div id="copyModal" class="copy-modal">
+        <div class="copy-modal-content">
+            <h3>📋 Копировать точку</h3>
+            <p>Выберите маршрут, в который хотите скопировать точку:</p>
+
+            <div class="routes-list" id="routesList">
+                <!-- Список маршрутов будет загружен здесь -->
+            </div>
+
+            <div class="copy-options">
+                <label>
+                    <input type="checkbox" id="copyImages" checked>
+                    Копировать фотографии
+                </label>
+                <br>
+                <small style="color: #666;">Новая точка будет добавлена в конец выбранного маршрута</small>
+            </div>
+
+            <div style="margin-top: 1rem; display: flex; gap: 10px;">
+                <button onclick="confirmCopy()" class="btn btn-copy">📋 Копировать</button>
+                <button onclick="closeCopyModal()" class="btn btn-secondary">❌ Отмена</button>
+            </div>
+        </div>
+    </div>
+
     {% if waypoints %}
     <div id="waypoints-list">
         {% for waypoint in waypoints %}
@@ -178,18 +274,26 @@
 
             <h3>{{ waypoint.order }}. {{ waypoint.name }}</h3>
             <p><strong>Тип:</strong> {{ waypoint.get_waypoint_type_display }}</p>
-            <p><strong>Координаты:</strong> {{ waypoint.latitude }}, {{ waypoint.longitude }}</p>
+            <p><strong>Координаты:</strong> {{ waypoint.latitude|floatformat:6 }}, {{ waypoint.longitude|floatformat:6 }}</p>
 
             {% if waypoint.short_description %}
-            <p>{{ waypoint.short_description }}</p>
+            <p>{{ waypoint.short_description|truncatechars:200 }}</p>
             {% endif %}
 
             <div style="margin-top: 1rem;">
                 <a href="{% url 'routes:edit_waypoint' waypoint.pk %}" class="btn btn-edit">✏️ Редактировать</a>
+
+                <!-- Кнопка для копирования в другой маршрут -->
+                <button onclick="openCopyModal({{ waypoint.id }}, '{{ waypoint.name|escapejs }}')"
+                        class="btn btn-copy">
+                    📋 Копировать в другой маршрут
+                </button>
+
                 <a href="{% url 'routes:delete_waypoint' waypoint.pk %}" class="btn btn-danger">🗑️ Удалить</a>
             </div>
         </div>
         {% endfor %}
+
     </div>
     {% else %}
         <div class="empty-state">
@@ -202,9 +306,13 @@
     {% endif %}
 
     <script>
-        // Функция для получения CSRF токена - ИСПРАВЛЕННАЯ ВЕРСИЯ
+        // Глобальные переменные для работы модального окна
+        let currentWaypointId = null;
+        let currentWaypointName = '';
+        let selectedRouteId = null;
+
+        // Функция для получения CSRF токена
         function getCSRFToken() {
-            // Способ 1: Ищем в cookies
             let cookieValue = null;
             const name = 'csrftoken';
             if (document.cookie && document.cookie !== '') {
@@ -218,7 +326,6 @@
                 }
             }
 
-            // Способ 2: Ищем в meta тегах
             if (!cookieValue) {
                 const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
                 if (csrfTokenMeta) {
@@ -226,16 +333,194 @@
                 }
             }
 
-            // Способ 3: Ищем в скрытом input
-            if (!cookieValue) {
-                const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-                if (csrfInput) {
-                    cookieValue = csrfInput.value;
+            return cookieValue;
+        }
+
+        // Открытие модального окна для копирования
+        function openCopyModal(waypointId, waypointName) {
+            currentWaypointId = waypointId;
+            currentWaypointName = waypointName;
+            selectedRouteId = null;
+
+            // Загружаем список маршрутов пользователя
+            loadUserRoutes();
+
+            // Показываем модальное окно
+            document.getElementById('copyModal').style.display = 'flex';
+        }
+
+        // Закрытие модального окна
+        function closeCopyModal() {
+            document.getElementById('copyModal').style.display = 'none';
+            currentWaypointId = null;
+            currentWaypointName = '';
+            selectedRouteId = null;
+        }
+
+        // Загрузка списка маршрутов пользователя
+        async function loadUserRoutes() {
+            const routesList = document.getElementById('routesList');
+            routesList.innerHTML = '<p>Загрузка маршрутов...</p>';
+
+            try {
+                // Пробуем разные URL, если один не сработает
+                const urls = [
+                    '/routes/api/user-routes/',
+                    '/api/user-routes/'
+                ];
+
+                let response = null;
+                for (const url of urls) {
+                    try {
+                        console.log(`Пробуем URL: ${url}`);
+                        response = await fetch(url, {
+                            headers: {
+                                'X-CSRFToken': getCSRFToken()
+                            }
+                        });
+                        if (response.ok) {
+                            console.log(`URL ${url} сработал`);
+                            break;
+                        } else {
+                            console.log(`URL ${url} вернул статус: ${response.status}`);
+                        }
+                    } catch (e) {
+                        console.log(`URL ${url} ошибка:`, e);
+                    }
                 }
+
+                if (response && response.ok) {
+                    const routes = await response.json();
+                    console.log("Получены маршруты:", routes);
+
+                    if (routes.error) {
+                        routesList.innerHTML = `<p>Ошибка: ${routes.error}</p>`;
+                        return;
+                    }
+
+                    if (!routes.length || routes.length === 0) {
+                        routesList.innerHTML = '<p>У вас нет других маршрутов для копирования.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    routes.forEach(route => {
+                        // Не показываем текущий маршрут в списке
+                        if (route.id !== {{ route.id }}) {
+                            html += `
+                                <div class="route-item">
+                                    <label>
+                                        <input type="radio"
+                                               name="targetRoute"
+                                               value="${route.id}"
+                                               onchange="selectRoute(${route.id})">
+                                        <strong>${route.title}</strong>
+                                        <br>
+                                        <small>${route.theme_display || 'Без темы'} • ${route.points_count || 0} точек • ${route.status_display || route.status}</small>
+                                    </label>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    routesList.innerHTML = html || '<p>Нет других маршрутов для копирования.</p>';
+                } else {
+                    const errorText = await response?.text() || 'Нет ответа от сервера';
+                    console.error('Ошибка загрузки маршрутов:', errorText);
+                    routesList.innerHTML = '<p>Ошибка загрузки маршрутов. Проверьте консоль браузера.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading routes:', error);
+                routesList.innerHTML = '<p>Ошибка загрузки маршрутов. Проверьте консоль браузера.</p>';
+            }
+        }
+
+        // Выбор маршрута
+        function selectRoute(routeId) {
+            selectedRouteId = routeId;
+
+            // Визуально выделяем выбранный элемент
+            document.querySelectorAll('.route-item').forEach(item => {
+                item.style.background = 'transparent';
+            });
+
+            const selectedItem = document.querySelector(`input[value="${routeId}"]`).closest('.route-item');
+            if (selectedItem) {
+                selectedItem.style.background = '#e8f4fd';
+            }
+        }
+
+        // ПОДТВЕРЖДЕНИЕ КОПИРОВАНИЯ
+        async function confirmCopy() {
+            if (!selectedRouteId) {
+                alert('Пожалуйста, выберите маршрут для копирования');
+                return;
             }
 
-            console.log("CSRF Token:", cookieValue ? "Found" : "Not found");
-            return cookieValue;
+            const copyImages = document.getElementById('copyImages').checked;
+
+            try {
+                // ИСПРАВЛЯЕМ URL: используем правильный путь
+                const url = `/routes/${selectedRouteId}/copy-waypoint/${currentWaypointId}/`;
+                console.log("Отправка запроса на:", url);
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        copy_images: copyImages
+                    })
+                });
+
+                console.log("Статус ответа:", response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log("Результат:", result);
+
+                    if (result.status === 'success') {
+                        alert(`✅ Точка "${currentWaypointName}" успешно скопирована!`);
+                        closeCopyModal();
+
+                        // Показываем сообщение об успехе
+                        showMessage('✅ Точка успешно скопирована в другой маршрут', 'success');
+                    } else {
+                        alert('Ошибка при копировании: ' + result.message);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error("Ошибка сервера:", errorText);
+                    alert('Ошибка при копировании. Проверьте права доступа. Статус: ' + response.status);
+                }
+            } catch (error) {
+                console.error('Error copying waypoint:', error);
+                alert('Ошибка при копировании: ' + error.message);
+            }
+        }
+
+        // Функция показа сообщения
+        function showMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                color: ${type === 'success' ? '#155724' : '#721c24'};
+                padding: 10px;
+                border-radius: 4px;
+                margin: 10px 0;
+                text-align: center;
+            `;
+            messageDiv.textContent = text;
+
+            const header = document.querySelector('.header');
+            header.parentNode.insertBefore(messageDiv, header.nextSibling);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
         }
 
         // Инициализация Drag & Drop
@@ -288,7 +573,7 @@
 
             console.log("Отправка данных порядка:", orderData);
 
-            // Отправляем данные на сервер - ИСПРАВЛЕННЫЙ ЗАПРОС
+            // Отправляем данные на сервер
             fetch(`/routes/{{ route.id }}/update-waypoints-order/`, {
                 method: 'POST',
                 headers: {
@@ -297,7 +582,7 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({ order: orderData }),
-                credentials: 'same-origin' // Важно для передачи cookies
+                credentials: 'same-origin'
             })
             .then(response => {
                 console.log("Статус ответа:", response.status);

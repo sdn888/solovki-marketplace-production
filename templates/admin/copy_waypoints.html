@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title|default:"Копирование точек маршрута" }}</h1>
+    <p>Вы собираетесь скопировать <strong>{{ waypoints|length }}</strong> точек в другой маршрут:</p>
+
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h3>Выбранные точки:</h3>
+        <ul>
+            {% for waypoint in waypoints %}
+            <li>
+                <strong>{{ waypoint.order }}. {{ waypoint.name }}</strong><br>
+                Тип: {{ waypoint.get_waypoint_type_display }}<br>
+                Из маршрута: "{{ waypoint.route.title }}"<br>
+                {% if waypoint.short_description %}
+                Описание: {{ waypoint.short_description|truncatechars:100 }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <form method="post" action="">
+        {% csrf_token %}
+
+        <div style="background: white; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            {{ form.as_p }}
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <input type="submit" name="apply" value="📋 Копировать выбранные точки"
+                   style="background: #5bc0de; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+            <a href="{% url 'admin:routes_waypoint_changelist' %}"
+               style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
+               ❌ Отмена
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Автоматическое увеличение высоты textarea при фокусе
+    document.addEventListener('DOMContentLoaded', function() {
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('focus', function() {
+                this.style.height = '150px';
+            });
+        });
+    });
+</script>
+{% endblock %}

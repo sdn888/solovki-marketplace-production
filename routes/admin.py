@@ -2,6 +2,11 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import Route, Waypoint, WaypointImage, RouteTip, RouteImage
 from .forms import RouteForm, WaypointForm
+from django.db import models
+from django import forms
+from django.shortcuts import render
+from django.contrib import messages
+
 
 class RouteImageInline(admin.TabularInline):
     model = RouteImage
@@ -40,7 +45,7 @@ class RouteAdmin(admin.ModelAdmin):
     search_fields = ['title', 'description']
     inlines = [RouteImageInline, WaypointInline, RouteTipInline]
 
-    # ДОБАВЛЯЕМ ЭТИ ДЕЙСТВИЯ
+    # ДОБАВЛЯЕМ ВСЕ ДЕЙСТВИЯ В ОДИН СПИСОК
     actions = ['make_published', 'make_draft', 'make_pending', 'make_archived', 'make_rejected']
 
     fieldsets = (
@@ -98,6 +103,91 @@ class WaypointAdmin(admin.ModelAdmin):
     search_fields = ['name', 'short_description', 'detailed_description', 'history_info']
     ordering = ['route', 'order']
     inlines = [WaypointImageInline]
+
+    # ДОБАВЛЯЕМ ДЕЙСТВИЕ ДЛЯ КОПИРОВАНИЯ
+    actions = ['copy_to_route_action']
+
+    def copy_to_route_action(self, request, queryset):
+        """Копировать выбранные точки в другой маршрут"""
+        from django.http import HttpResponseRedirect
+
+        class CopyRouteForm(forms.Form):
+            target_route = forms.ModelChoiceField(
+                queryset=Route.objects.all(),
+                label="Целевой маршрут",
+                required=True
+            )
+            copy_images = forms.BooleanField(
+                initial=True,
+                label="Копировать фотографии",
+                required=False
+            )
+
+        if 'apply' in request.POST:
+            form = CopyRouteForm(request.POST)
+            if form.is_valid():
+                target_route = form.cleaned_data['target_route']
+                copy_images = form.cleaned_data['copy_images']
+
+                copied_count = 0
+                max_order = target_route.waypoints.aggregate(models.Max('order'))['order__max'] or 0
+
+                for waypoint in queryset:
+                    # Увеличиваем порядок для каждой новой точки
+                    max_order += 1
+
+                    # Создаем копию точки
+                    new_waypoint = Waypoint.objects.create(
+                        route=target_route,
+                        name=f"{waypoint.name} (копия)",
+                        short_description=waypoint.short_description,
+                        detailed_description=waypoint.detailed_description,
+                        history_info=waypoint.history_info,
+                        architecture_info=waypoint.architecture_info,
+                        visit_notes=waypoint.visit_notes,
+                        path_description=waypoint.path_description,
+                        best_time_to_visit=waypoint.best_time_to_visit,
+                        difficulty=waypoint.difficulty,
+                        estimated_stay_minutes=waypoint.estimated_stay_minutes,
+                        has_food=waypoint.has_food,
+                        has_toilets=waypoint.has_toilets,
+                        has_parking=waypoint.has_parking,
+                        is_wheelchair_accessible=waypoint.is_wheelchair_accessible,
+                        is_optional=waypoint.is_optional,
+                        waypoint_type=waypoint.waypoint_type,
+                        latitude=waypoint.latitude,
+                        longitude=waypoint.longitude,
+                        altitude=waypoint.altitude,
+                        order=max_order
+                    )
+
+                    # Копируем изображения если выбрано
+                    if copy_images:
+                        for image in waypoint.images.all():
+                            WaypointImage.objects.create(
+                                waypoint=new_waypoint,
+                                image=image.image,
+                                caption=image.caption,
+                                order=image.order,
+                                is_primary=image.is_primary
+                            )
+
+                    copied_count += 1
+
+                self.message_user(request, f'✅ Скопировано {copied_count} точек в маршрут "{target_route.title}"')
+                return None
+
+        else:
+            form = CopyRouteForm()
+
+        return render(request, 'admin/copy_waypoints.html', {
+            'waypoints': queryset,
+            'form': form,
+            'title': 'Копирование точек в другой маршрут',
+            'action_name': 'copy_to_route_action'
+        })
+
+    copy_to_route_action.short_description = "Копировать выбранные точки в другой маршрут"
 
     def short_description_preview(self, obj):
         if obj.short_description:

@@ -10,7 +10,7 @@ import json
 from django.utils.decorators import method_decorator
 import logging
 
-from .models import Route, Waypoint, WaypointImage  # Добавлен WaypointImage
+from .models import Route, Waypoint, WaypointImage
 from .forms import RouteForm
 from .forms_guides import GuideWaypointForm
 from users.decorators import guide_required
@@ -442,17 +442,23 @@ def copy_waypoint_to_route(request, route_id, waypoint_id):
 @login_required
 def user_routes_api(request):
     """API для получения списка маршрутов пользователя"""
-    routes = Route.objects.filter(author=request.user).exclude(status='draft')
+    try:
+        # Включаем все маршруты пользователя, не только не черновики
+        routes = Route.objects.filter(author=request.user)
 
-    routes_data = []
-    for route in routes:
-        routes_data.append({
-            'id': route.id,
-            'title': route.title,
-            'theme_display': route.get_theme_display(),
-            'points_count': route.waypoints.count(),
-            'status': route.status,
-            'is_active': route.is_active
-        })
+        routes_data = []
+        for route in routes:
+            routes_data.append({
+                'id': route.id,
+                'title': route.title,
+                'theme_display': route.get_theme_display(),
+                'points_count': route.waypoints.count(),
+                'status': route.status,
+                'is_active': route.is_active,
+                'status_display': route.get_status_display()
+            })
 
-    return JsonResponse(routes_data, safe=False)
+        return JsonResponse(routes_data, safe=False)
+    except Exception as e:
+        logger.error(f"Ошибка в user_routes_api: {e}")
+        return JsonResponse({'error': str(e)}, status=500, safe=False)
