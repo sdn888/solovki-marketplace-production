@@ -29,4 +29,6 @@ urlpatterns = [
     path('waypoint/<int:pk>/edit/', views_roles.WaypointUpdateView.as_view(), name='edit_waypoint'),
     path('waypoint/<int:pk>/delete/', views_roles.WaypointDeleteView.as_view(), name='delete_waypoint'),
     path('<int:route_id>/update-waypoints-order/', views_roles.update_waypoints_order, name='update_waypoints_order'),
+    path('<int:route_id>/copy-waypoint/<int:waypoint_id>/', views_roles.copy_waypoint_to_route, name='copy_waypoint'),
+    path('api/user-routes/', views_roles.user_routes_api, name='user_routes_api'),
 ]

@@ -4,17 +4,19 @@ from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.http import HttpResponseForbidden
-from django.http import JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse
 from django.db import transaction, models
 import json
 from django.utils.decorators import method_decorator
+import logging
 
-from .models import Route, Waypoint
+from .models import Route, Waypoint, WaypointImage  # Добавлен WaypointImage
 from .forms import RouteForm
-from .forms_guides import GuideWaypointForm  # ИМПОРТИРУЕМ НОВУЮ ФОРМУ
+from .forms_guides import GuideWaypointForm
 from users.decorators import guide_required
 from users.utils import can_edit_route, can_moderate_route
+
+logger = logging.getLogger(__name__)
 
 
 # Представление для создания маршрута
@@ -340,3 +342,117 @@ def manage_waypoints(request, pk):
         'route': route,
         'waypoints': waypoints,
     })
+
+
+@login_required
+def copy_waypoint_to_route(request, route_id, waypoint_id):
+    """Копирование точки в другой маршрут"""
+
+    # Проверяем метод запроса
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Метод не разрешен'}, status=405)
+
+    try:
+        target_route = get_object_or_404(Route, pk=route_id)
+        source_waypoint = get_object_or_404(Waypoint, pk=waypoint_id)
+
+        # Проверяем права: можно копировать из своих маршрутов или опубликованных
+        can_copy = (
+                source_waypoint.route.author == request.user or
+                source_waypoint.route.status == 'published' or
+                request.user.role == 'admin'
+        )
+
+        if not can_copy:
+            return JsonResponse({'status': 'error', 'message': 'У вас нет прав для копирования этой точки'}, status=403)
+
+        # Получаем параметры из запроса (AJAX)
+        try:
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                copy_images = data.get('copy_images', True)
+            else:
+                copy_images = request.POST.get('copy_images', 'true').lower() == 'true'
+        except (json.JSONDecodeError, KeyError):
+            copy_images = True  # По умолчанию копируем изображения
+
+        # Вычисляем порядок (в конец маршрута)
+        max_order = target_route.waypoints.aggregate(models.Max('order'))['order__max']
+        new_order = (max_order or 0) + 1
+
+        # Создаем копию точки
+        new_waypoint = Waypoint.objects.create(
+            route=target_route,
+            name=f"{source_waypoint.name} (копия)",
+            short_description=source_waypoint.short_description,
+            detailed_description=source_waypoint.detailed_description,
+            history_info=source_waypoint.history_info,
+            architecture_info=source_waypoint.architecture_info,
+            visit_notes=source_waypoint.visit_notes,
+            path_description=source_waypoint.path_description,
+            best_time_to_visit=source_waypoint.best_time_to_visit,
+            difficulty=source_waypoint.difficulty,
+            estimated_stay_minutes=source_waypoint.estimated_stay_minutes,
+            has_food=source_waypoint.has_food,
+            has_toilets=source_waypoint.has_toilets,
+            has_parking=source_waypoint.has_parking,
+            is_wheelchair_accessible=source_waypoint.is_wheelchair_accessible,
+            is_optional=source_waypoint.is_optional,
+            waypoint_type=source_waypoint.waypoint_type,
+            latitude=source_waypoint.latitude,
+            longitude=source_waypoint.longitude,
+            altitude=source_waypoint.altitude,
+            order=new_order
+        )
+
+        # Копируем изображения если нужно
+        images_copied = 0
+        if copy_images:
+            for image in source_waypoint.images.all():
+                WaypointImage.objects.create(
+                    waypoint=new_waypoint,
+                    image=image.image,
+                    caption=image.caption,
+                    order=image.order,
+                    is_primary=image.is_primary
+                )
+                images_copied += 1
+
+        # Логируем успешное копирование
+        logger.info(
+            f"Пользователь {request.user.username} скопировал точку {source_waypoint.id} в маршрут {target_route.id}")
+
+        # Для AJAX запросов возвращаем JSON
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Точка "{source_waypoint.name}" успешно скопирована в маршрут "{target_route.title}"',
+            'new_waypoint_id': new_waypoint.id,
+            'images_copied': images_copied,
+            'redirect_url': reverse_lazy('routes:manage_waypoints', kwargs={'pk': target_route.pk})
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка при копировании точки: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Ошибка при копировании точки: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def user_routes_api(request):
+    """API для получения списка маршрутов пользователя"""
+    routes = Route.objects.filter(author=request.user).exclude(status='draft')
+
+    routes_data = []
+    for route in routes:
+        routes_data.append({
+            'id': route.id,
+            'title': route.title,
+            'theme_display': route.get_theme_display(),
+            'points_count': route.waypoints.count(),
+            'status': route.status,
+            'is_active': route.is_active
+        })
+
+    return JsonResponse(routes_data, safe=False)
