@@ -154,6 +154,16 @@
             color: white;
         }
 
+        .btn-waypoints {
+            background: #9B59B6; /* Фиолетовый цвет для кнопки "Мои точки" */
+            color: white;
+        }
+
+        .btn-notes {
+            background: #E74C3C; /* Красный цвет для кнопки "Мои заметки" */
+            color: white;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -197,6 +207,12 @@
                 position: static;
                 margin: 0 auto 1rem auto;
                 width: fit-content;
+            }
+
+            .nav-buttons {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
             }
         }
 
@@ -262,14 +278,31 @@
             ← Назад к маршрутам
         </a>
         <h1>🗺️ Мои персональные маршруты</h1>
-        <p>Создавайте собственные маршруты из понравившихся точек</p>
+        <p>Создавайте собственные маршруты из понравившихся точек и ваших собственных точек</p>
 
-        <div style="margin-top: 1rem;">
-            <a href="{% url 'users:visitnote_list' %}" class="btn" style="background: #9B59B6; color: white; margin-right: 10px;">
+        <!-- НАВИГАЦИОННЫЕ КНОПКИ -->
+        <div style="margin-top: 1rem;" class="nav-buttons">
+            <a href="{% url 'users:visitnote_list' %}" class="btn btn-notes">
                 📝 Мои заметки
             </a>
 
-        <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">➕ Создать новый маршрут</a>
+            <!-- НОВАЯ КНОПКА: Мои точки -->
+            <a href="{% url 'users:user_waypoint_list' %}" class="btn btn-waypoints">
+                📍 Мои точки
+            </a>
+
+            <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">
+                ➕ Создать новый маршрут
+            </a>
+        </div>
+
+        <!-- ПОДСКАЗКА О НОВОМ ФУНКЦИОНАЛЕ -->
+        <div style="margin-top: 1rem; background: rgba(255,255,255,0.1); padding: 0.75rem; border-radius: 4px;">
+            <p style="margin: 0; font-size: 0.9rem;">
+                💡 <strong>Новый функционал:</strong> Теперь вы можете создавать собственные точки маршрута!
+                Нажмите "📍 Мои точки" → "Создать новую точку"
+            </p>
+        </div>
     </div>
 
     {% if messages %}
@@ -310,7 +343,12 @@
         <div class="empty-state">
             <h2>😔 У вас пока нет персональных маршрутов</h2>
             <p>Создайте свой первый маршрут и добавляйте в него интересные точки!</p>
-            <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">🗺️ Создать первый маршрут</a>
+            <p style="margin: 1rem 0;">Вы можете:</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem;">
+                <a href="{% url 'users:personal_route_create' %}" class="btn btn-primary">🗺️ Создать первый маршрут</a>
+                <a href="{% url 'users:user_waypoint_create' %}" class="btn btn-waypoints">📍 Создать свою точку</a>
+                <a href="{% url 'home' %}" class="btn" style="background: var(--sea-dark); color: white;">🔍 Найти маршруты</a>
+            </div>
         </div>
     {% endif %}
 

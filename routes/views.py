@@ -16,13 +16,27 @@ def route_list(request):
 
 
 def route_detail(request, pk):
-    route = get_object_or_404(Route, pk=pk, is_active=True)
+    route = get_object_or_404(Route, pk=pk)
 
-    # ДОБАВЛЯЕМ проверку статуса маршрута
-    if route.status != 'published':
-        # Проверяем права доступа для неопубликованных маршрутов
-        if not request.user.is_authenticated or (request.user != route.author and not request.user.is_staff):
+    # ПРОВЕРЯЕМ ДОСТУП К МАРШРУТУ
+    if route.status != 'published' and not route.is_active:
+        # Для черновиков и неактивных маршрутов проверяем права
+        if not request.user.is_authenticated:
             return HttpResponseForbidden("Маршрут не доступен для просмотра")
+
+        # Автор и администраторы могут видеть свои черновики
+        if hasattr(route, 'author') and route.author:
+            can_view = (
+                    request.user == route.author or
+                    request.user.is_staff or
+                    request.user.role in ['admin', 'expert_guide']
+            )
+            if not can_view:
+                return HttpResponseForbidden("Маршрут не доступен для просмотра")
+        else:
+            # Если у маршрута нет автора, разрешаем доступ только администраторам
+            if not (request.user.is_staff or request.user.role in ['admin', 'expert_guide']):
+                return HttpResponseForbidden("Маршрут не доступен для просмотра")
 
     waypoints = route.waypoints.all().order_by('order').prefetch_related('images')
     tips = route.tips.all().order_by('order')

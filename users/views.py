@@ -1,15 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 import json
-from routes.models import Waypoint
+from routes.models import Route, Waypoint, WaypointImage
 from .models import FavoriteWaypoint, VisitNote, PersonalRoute, PersonalRoutePoint
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from .forms import PersonalRouteForm
 from django.db import transaction
-from .forms import VisitNoteForm
+from .forms import VisitNoteForm, UserWaypointForm, UserWaypointImageForm
 from django.utils import timezone
 from django.db.models import Q
 from routes.export_utils import generate_route_pdf, generate_route_gpx
@@ -291,7 +291,7 @@ class VisitNoteCreateView(CreateView):
 
     def form_valid(self, form):
         # Отладочная информация
-        print("=== ДЕБАГ ИНФОРМАЦИЯ ===")
+        print("=== ДЕБАГ ИНФОРМАЦИИ ===")
         print(f"Файлы в запросе: {self.request.FILES}")
         print(f"Данные формы: {form.cleaned_data}")
 
@@ -400,3 +400,236 @@ def personal_route_export_pdf(request, pk):
     response = HttpResponse(pdf_buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{personal_route.title}.pdf"'
     return response
+
+
+class UserWaypointCreateView(CreateView):
+    """Создание новой точки пользователем"""
+    model = Waypoint
+    form_class = UserWaypointForm
+    template_name = 'users/waypoints/waypoint_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Создание новой точки'
+        context['image_form'] = UserWaypointImageForm()
+        return context
+
+    def form_valid(self, form):
+        # Получаем или создаем РЕАЛЬНЫЙ маршрут Route для пользовательских точек
+        user_points_route, created = Route.objects.get_or_create(
+            author=self.request.user,
+            title='Мои точки',
+            defaults={
+                'description': 'Точки, созданные мной',
+                'theme': 'mixed',
+                'transport_type': 'foot',
+                'duration_hours': 0,
+                'is_active': False,  # Делаем неактивным, чтобы не показывался в общем списке
+                'status': 'draft',  # Черновик
+                'access_level': 'private',  # Приватный
+                'max_participants': 1,
+            }
+        )
+
+        # Сохраняем точку с привязкой к РЕАЛЬНОМУ маршруту Route
+        form.instance.route = user_points_route
+
+        # Устанавливаем порядок (в конец маршрута)
+        max_order = user_points_route.waypoints.count()
+        form.instance.order = max_order + 1
+
+        # Сохраняем точку
+        response = super().form_valid(form)
+
+        # Обрабатываем загруженные изображения
+        images = self.request.FILES.getlist('images')
+        for i, image in enumerate(images):
+            WaypointImage.objects.create(
+                waypoint=self.object,
+                image=image,
+                order=i,
+                is_primary=(i == 0)  # Первое изображение - основное
+            )
+
+        # Также создаем связь с PersonalRoute для совместимости
+        personal_route, _ = PersonalRoute.objects.get_or_create(
+            user=self.request.user,
+            title='Мои точки',
+            defaults={
+                'description': 'Точки, созданные мной',
+                'color': '#1ABC9C',
+                'is_public': False
+            }
+        )
+
+        # Добавляем точку в персональный маршрут через PersonalRoutePoint
+        PersonalRoutePoint.objects.create(
+            route=personal_route,
+            waypoint=self.object,
+            order=personal_route.points.count() + 1
+        )
+
+        messages.success(self.request, f'✅ Точка "{self.object.name}" успешно создана!')
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('users:user_waypoint_detail', kwargs={'pk': self.object.pk})
+
+
+class UserWaypointUpdateView(UpdateView):
+    """Редактирование точки пользователем"""
+    model = Waypoint
+    form_class = UserWaypointForm
+    template_name = 'users/waypoints/waypoint_form.html'
+
+    def get_queryset(self):
+        # Пользователь может работать только с точками в своем маршруте "Мои точки"
+        return Waypoint.objects.filter(
+            route__author=self.request.user,
+            route__title='Мои точки'
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Редактирование точки'
+        context['edit_mode'] = True
+        context['image_form'] = UserWaypointImageForm()
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        # Обрабатываем новые загруженные изображения
+        images = self.request.FILES.getlist('images')
+        if images:
+            # Определяем следующий порядковый номер для изображений
+            current_count = self.object.images.count()
+            for i, image in enumerate(images):
+                WaypointImage.objects.create(
+                    waypoint=self.object,
+                    image=image,
+                    order=current_count + i,
+                    is_primary=False  # Новые изображения не делаем основными
+                )
+
+        messages.success(self.request, f'✅ Точка "{self.object.name}" успешно обновлена!')
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('users:user_waypoint_detail', kwargs={'pk': self.object.pk})
+
+
+class UserWaypointDetailView(DetailView):
+    """Просмотр деталей точки пользователя"""
+    model = Waypoint
+    template_name = 'users/waypoints/waypoint_detail.html'
+
+    def get_queryset(self):
+        # Пользователь может работать только с точками в своем маршруте "Мои точки"
+        return Waypoint.objects.filter(
+            route__author=self.request.user,
+            route__title='Мои точки'
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['images'] = self.object.images.all()
+        return context
+
+
+class UserWaypointDeleteView(DeleteView):
+    """Удаление точки пользователем"""
+    model = Waypoint
+    template_name = 'users/waypoints/waypoint_confirm_delete.html'
+
+    def get_queryset(self):
+        # Пользователь может работать только с точками в своем маршруте "Мои точки"
+        return Waypoint.objects.filter(
+            route__author=self.request.user,
+            route__title='Мои точки'
+        )
+
+    def delete(self, request, *args, **kwargs):
+        waypoint = self.get_object()
+        messages.success(request, f'✅ Точка "{waypoint.name}" успешно удалена!')
+        return super().delete(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('users:personal_route_list')
+
+
+@login_required
+def user_waypoint_list(request):
+    """Список всех точек, созданных пользователем"""
+    # Получаем маршрут "Мои точки" пользователя
+    user_points_route = Route.objects.filter(
+        author=request.user,
+        title='Мои точки'
+    ).first()
+
+    if user_points_route:
+        waypoints = user_points_route.waypoints.all()
+    else:
+        waypoints = []
+
+    return render(request, 'users/waypoints/waypoint_list.html', {
+        'waypoints': waypoints,
+        'has_user_points_route': bool(user_points_route)
+    })
+
+
+@login_required
+def add_point_to_personal_route_select(request, waypoint_id):
+    """Выбор маршрута для добавления созданной точки"""
+    waypoint = get_object_or_404(Waypoint, id=waypoint_id)
+
+    # ИСПРАВЛЕНО: Проверяем, что точка принадлежит пользователю через route__author
+    if not Waypoint.objects.filter(
+            id=waypoint_id,
+            route__author=request.user  # Используем route__author вместо route__personalroute__user
+    ).exists():
+        return HttpResponseForbidden("У вас нет прав на добавление этой точки")
+
+    # Получаем все персональные маршруты пользователя
+    personal_routes = PersonalRoute.objects.filter(user=request.user)
+
+    return render(request, 'users/waypoints/select_route.html', {
+        'waypoint': waypoint,
+        'personal_routes': personal_routes,
+        'exclude_route_id': waypoint.route.id if waypoint.route else None
+    })
+
+
+@login_required
+def add_user_waypoint_to_route(request, waypoint_id, route_id):
+    """Добавление пользовательской точки в персональный маршрут"""
+    waypoint = get_object_or_404(Waypoint, id=waypoint_id)
+    personal_route = get_object_or_404(PersonalRoute, id=route_id, user=request.user)
+
+    # ИСПРАВЛЕНО: Проверяем права через route__author
+    if not Waypoint.objects.filter(
+            id=waypoint_id,
+            route__author=request.user  # Используем route__author
+    ).exists():
+        return HttpResponseForbidden("У вас нет прав на добавление этой точки")
+
+    # Проверяем, не добавлена ли уже эта точка
+    existing = PersonalRoutePoint.objects.filter(
+        route=personal_route,
+        waypoint=waypoint
+    ).exists()
+
+    if existing:
+        messages.info(request, f'Точка "{waypoint.name}" уже есть в маршруте "{personal_route.title}"')
+    else:
+        # Определяем порядок
+        next_order = personal_route.points.count() + 1
+
+        PersonalRoutePoint.objects.create(
+            route=personal_route,
+            waypoint=waypoint,
+            order=next_order
+        )
+        messages.success(request, f'✅ Точка "{waypoint.name}" добавлена в маршрут "{personal_route.title}"')
+
+    return redirect('users:personal_route_detail', pk=route_id)

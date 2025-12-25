@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Удаление точки - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .confirm-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 10px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'users:user_waypoint_detail' waypoint.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к точке
+        </a>
+        <h1>🗑️ Удаление точки</h1>
+    </div>
+
+    <div class="confirm-card">
+        <h2>Вы уверены, что хотите удалить точку?</h2>
+        <p><strong>"{{ waypoint.name }}"</strong></p>
+
+        <p style="color: #666; margin: 1.5rem 0;">
+            Это действие нельзя отменить. Все изображения и данные точки будут удалены.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                🗑️ Да, удалить
+            </button>
+            <a href="{% url 'users:user_waypoint_detail' waypoint.pk %}" class="btn btn-secondary">
+                ❌ Отмена
+            </a>
+        </form>
+    </div>
+</body>
+</html>

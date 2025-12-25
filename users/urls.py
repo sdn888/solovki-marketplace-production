@@ -30,4 +30,14 @@ urlpatterns = [
     path('visit-notes/<int:pk>/delete/', VisitNoteDeleteView.as_view(), name='visitnote_delete'),
     path('visit-notes/<int:note_id>/add-photos/', views.add_photos_to_visit_note, name='visitnote_add_photos'),
     path('personal-routes/<int:pk>/export-pdf/', views.personal_route_export_pdf, name='personal_route_export_pdf'),
+# Новые пути для управления точками пользователя
+    path('waypoints/', views.user_waypoint_list, name='user_waypoint_list'),
+    path('waypoints/create/', views.UserWaypointCreateView.as_view(), name='user_waypoint_create'),
+    path('waypoints/<int:pk>/', views.UserWaypointDetailView.as_view(), name='user_waypoint_detail'),
+    path('waypoints/<int:pk>/edit/', views.UserWaypointUpdateView.as_view(), name='user_waypoint_update'),
+    path('waypoints/<int:pk>/delete/', views.UserWaypointDeleteView.as_view(), name='user_waypoint_delete'),
+    path('waypoints/<int:waypoint_id>/add-to-route/', views.add_point_to_personal_route_select,
+         name='add_point_to_personal_route_select'),
+    path('waypoints/<int:waypoint_id>/add-to-route/<int:route_id>/', views.add_user_waypoint_to_route,
+         name='add_user_waypoint_to_route'),
 ]

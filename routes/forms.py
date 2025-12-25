@@ -75,6 +75,30 @@ class WaypointForm(forms.ModelForm):
             'order': 'Порядковый номер точки в маршруте',
         }
 
+    def clean_latitude(self):
+        """Валидация широты для Соловецких островов"""
+        latitude = self.cleaned_data.get('latitude')
+        if latitude is not None:
+            # Правильный диапазон для Соловков
+            if latitude < 63.5 or latitude > 65.5:
+                raise forms.ValidationError(
+                    "Широта должна быть в диапазоне 63.5 - 65.5 для Соловецких островов. "
+                    "Типичные значения: 64.0 - 65.0"
+                )
+        return latitude
+
+    def clean_longitude(self):
+        """Валидация долготы для Соловецких островов"""
+        longitude = self.cleaned_data.get('longitude')
+        if longitude is not None:
+            # Правильный диапазон для Соловков
+            if longitude < 34.5 or longitude > 36.5:
+                raise forms.ValidationError(
+                    "Долгота должна быть в диапазоне 34.5 - 36.5 для Соловецких островов. "
+                    "Типичные значения: 35.0 - 36.0"
+                )
+        return longitude
+
 
 class RouteForm(forms.ModelForm):
     start_lat = CoordinateFloatField(

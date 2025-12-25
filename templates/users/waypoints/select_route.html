@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор маршрута - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--aurora);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .route-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 5px;
+        }
+
+        .btn-secondary {
+            background: var(--stone);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'users:user_waypoint_detail' waypoint.pk %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к точке
+        </a>
+        <h1>🗺️ Выбор маршрута</h1>
+        <p>Выберите маршрут для добавления точки "{{ waypoint.name }}"</p>
+    </div>
+
+    {% if personal_routes %}
+        {% for route in personal_routes %}
+            {% if route.id != exclude_route_id %}
+                <a href="{% url 'users:add_user_waypoint_to_route' waypoint.pk route.pk %}"
+                   style="text-decoration: none; color: inherit;">
+                    <div class="route-card" style="border-left-color: {{ route.color }}">
+                        <h3>{{ route.title }}</h3>
+                        <p>{{ route.description|truncatechars:100 }}</p>
+                        <p><small>Точек: {{ route.points.count }}</small></p>
+                    </div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; background: white; border-radius: 8px;">
+            <p>У вас нет персональных маршрутов.</p>
+            <a href="{% url 'users:personal_route_create' %}" class="btn" style="background: var(--aurora); color: white;">
+                🗺️ Создать маршрут
+            </a>
+        </div>
+    {% endif %}
+
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{% url 'users:user_waypoint_detail' waypoint.pk %}" class="btn btn-secondary">
+            ❌ Отмена
+        </a>
+    </div>
+</body>
+</html>

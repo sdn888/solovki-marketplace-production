@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои точки - Solovki Marketplace</title>
+    <style>
+        :root {
+            --sea-deep: #2C3E50;
+            --sea-dark: #34495E;
+            --cloud: #ECF0F1;
+            --stone: #BDC3C7;
+            --aurora: #1ABC9C;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: var(--cloud);
+            color: var(--sea-deep);
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--sea-deep);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .waypoint-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--aurora);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: var(--aurora);
+            color: white;
+        }
+
+        .btn-edit {
+            background: #3498DB;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .image-thumb {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'users:personal_route_list' %}" class="btn" style="background: rgba(255,255,255,0.2); color: white;">
+            ← Назад к моим маршрутам
+        </a>
+        <h1>📍 Мои точки</h1>
+        <p>Точки маршрута, созданные вами</p>
+
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'users:user_waypoint_create' %}" class="btn btn-primary">
+                ➕ Создать новую точку
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background: #d4edda; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if waypoints %}
+        {% for waypoint in waypoints %}
+        <div class="waypoint-card">
+            <div style="display: flex; align-items: start;">
+                {% with waypoint.images.first as main_image %}
+                    {% if main_image %}
+                        <img src="{{ main_image.image.url }}" alt="{{ waypoint.name }}" class="image-thumb">
+                    {% else %}
+                        <div style="width: 100px; height: 100px; background: #f0f0f0; border-radius: 4px; margin-right: 10px; display: flex; align-items: center; justify-content: center;">
+                            📍
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <div style="flex: 1;">
+                    <h3>{{ waypoint.name }}</h3>
+                    <p><strong>Тип:</strong> {{ waypoint.get_waypoint_type_display }}</p>
+                    <p><strong>Координаты:</strong> {{ waypoint.latitude|floatformat:6 }}, {{ waypoint.longitude|floatformat:6 }}</p>
+
+                    {% if waypoint.short_description %}
+                        <p>{{ waypoint.short_description|truncatechars:200 }}</p>
+                    {% endif %}
+
+                    <div style="margin-top: 1rem;">
+                        <a href="{% url 'users:user_waypoint_detail' waypoint.pk %}" class="btn">
+                            👁️ Просмотреть
+                        </a>
+                        <a href="{% url 'users:user_waypoint_update' waypoint.pk %}" class="btn btn-edit">
+                            ✏️ Редактировать
+                        </a>
+                        <a href="{% url 'users:user_waypoint_delete' waypoint.pk %}" class="btn btn-danger">
+                            🗑️ Удалить
+                        </a>
+
+                        <!-- Кнопка для добавления в персональный маршрут -->
+                        <a href="{% url 'users:add_point_to_personal_route_select' waypoint.pk %}"
+                           class="btn"
+                           style="background: #9B59B6; color: white;">
+                            🗺️ Добавить в маршрут
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <h2>😔 У вас пока нет собственных точек</h2>
+            <p>Создайте свою первую точку маршрута!</p>
+            <a href="{% url 'users:user_waypoint_create' %}" class="btn btn-primary">
+                📍 Создать первую точку
+            </a>
+        </div>
+    {% endif %}
+</body>
+</html>

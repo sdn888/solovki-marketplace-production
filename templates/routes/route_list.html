@@ -513,6 +513,7 @@
                     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                         <a href="{% url 'users:favorite_list' %}" class="nav-btn">⭐ Избранное</a>
                         <a href="{% url 'users:personal_route_list' %}" class="nav-btn">🗺️ Персональные</a>
+                        <a href="{% url 'users:user_waypoint_list' %}" class="nav-btn">📍 Мои точки</a>
                         <a href="{% url 'users:visitnote_list' %}" class="nav-btn">📝 Заметки</a>
 
                         {% if user_can_create_routes %}
@@ -548,6 +549,12 @@
                 cursor: pointer;
                 font-family: inherit;
                 line-height: normal;
+                transition: all 0.3s ease;
+            }
+
+            .nav-btn:hover {
+                background: rgba(255,255,255,0.3);
+                transform: translateY(-1px);
             }
             </style>
         </div>
